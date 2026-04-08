@@ -1,0 +1,299 @@
+Bulding VGG19
+loading annotations into memory...
+Done (t=0.22s)
+creating index...
+index created!
+Total number of validation images 2693
+Processing Images in validation set
+Processed 10 images
+Processed 20 images
+Processed 30 images
+Processed 40 images
+Processed 50 images
+Processed 60 images
+Processed 70 images
+Processed 80 images
+Processed 90 images
+Processed 100 images
+Processed 110 images
+Processed 120 images
+Processed 130 images
+Processed 140 images
+Processed 150 images
+Processed 160 images
+Processed 170 images
+Processed 180 images
+Processed 190 images
+Processed 200 images
+Processed 210 images
+Processed 220 images
+Processed 230 images
+Processed 240 images
+Processed 250 images
+Processed 260 images
+Processed 270 images
+Processed 280 images
+Processed 290 images
+Processed 300 images
+Processed 310 images
+Processed 320 images
+Processed 330 images
+Processed 340 images
+Processed 350 images
+Processed 360 images
+Processed 370 images
+Processed 380 images
+Processed 390 images
+Processed 400 images
+Processed 410 images
+Processed 420 images
+Processed 430 images
+Processed 440 images
+Processed 450 images
+Processed 460 images
+Processed 470 images
+Processed 480 images
+Processed 490 images
+Processed 500 images
+Processed 510 images
+Processed 520 images
+Processed 530 images
+Processed 540 images
+Processed 550 images
+Processed 560 images
+Processed 570 images
+Processed 580 images
+Processed 590 images
+Processed 600 images
+Processed 610 images
+Processed 620 images
+Processed 630 images
+Processed 640 images
+Processed 650 images
+Processed 660 images
+Processed 670 images
+Processed 680 images
+Processed 690 images
+Processed 700 images
+Processed 710 images
+Processed 720 images
+Processed 730 images
+Processed 740 images
+Processed 750 images
+Processed 760 images
+Processed 770 images
+Processed 780 images
+Processed 790 images
+Processed 800 images
+Processed 810 images
+Processed 820 images
+Processed 830 images
+Processed 840 images
+Processed 850 images
+Processed 860 images
+Processed 870 images
+Processed 880 images
+Processed 890 images
+Processed 900 images
+Processed 910 images
+Processed 920 images
+Processed 930 images
+Processed 940 images
+Processed 950 images
+Processed 960 images
+Processed 970 images
+Processed 980 images
+Processed 990 images
+Processed 1000 images
+Processed 1010 images
+Processed 1020 images
+Processed 1030 images
+Processed 1040 images
+Processed 1050 images
+Processed 1060 images
+Processed 1070 images
+Processed 1080 images
+Processed 1090 images
+Processed 1100 images
+Processed 1110 images
+Processed 1120 images
+Processed 1130 images
+Processed 1140 images
+Processed 1150 images
+Processed 1160 images
+Processed 1170 images
+Processed 1180 images
+Processed 1190 images
+Processed 1200 images
+Processed 1210 images
+Processed 1220 images
+Processed 1230 images
+Processed 1240 images
+Processed 1250 images
+Processed 1260 images
+Processed 1270 images
+Processed 1280 images
+Processed 1290 images
+Processed 1300 images
+Processed 1310 images
+Processed 1320 images
+Processed 1330 images
+Processed 1340 images
+Processed 1350 images
+Processed 1360 images
+Processed 1370 images
+Processed 1380 images
+Processed 1390 images
+Processed 1400 images
+Processed 1410 images
+Processed 1420 images
+Processed 1430 images
+Processed 1440 images
+Processed 1450 images
+Processed 1460 images
+Processed 1470 images
+Processed 1480 images
+Processed 1490 images
+Processed 1500 images
+Processed 1510 images
+Processed 1520 images
+Processed 1530 images
+Processed 1540 images
+Processed 1550 images
+Processed 1560 images
+Processed 1570 images
+Processed 1580 images
+Processed 1590 images
+Processed 1600 images
+Processed 1610 images
+Processed 1620 images
+Processed 1630 images
+Processed 1640 images
+Processed 1650 images
+Processed 1660 images
+Processed 1670 images
+Processed 1680 images
+Processed 1690 images
+Processed 1700 images
+Processed 1710 images
+Processed 1720 images
+Processed 1730 images
+Processed 1740 images
+Processed 1750 images
+Processed 1760 images
+Processed 1770 images
+Processed 1780 images
+Processed 1790 images
+Processed 1800 images
+Processed 1810 images
+Processed 1820 images
+Processed 1830 images
+Processed 1840 images
+Processed 1850 images
+Processed 1860 images
+Processed 1870 images
+Processed 1880 images
+Processed 1890 images
+Processed 1900 images
+Processed 1910 images
+Processed 1920 images
+Processed 1930 images
+Processed 1940 images
+Processed 1950 images
+Processed 1960 images
+Processed 1970 images
+Processed 1980 images
+Processed 1990 images
+Processed 2000 images
+Processed 2010 images
+Processed 2020 images
+Processed 2030 images
+Processed 2040 images
+Processed 2050 images
+Processed 2060 images
+Processed 2070 images
+Processed 2080 images
+Processed 2090 images
+Processed 2100 images
+Processed 2110 images
+Processed 2120 images
+Processed 2130 images
+Processed 2140 images
+Processed 2150 images
+Processed 2160 images
+Processed 2170 images
+Processed 2180 images
+Processed 2190 images
+Processed 2200 images
+Processed 2210 images
+Processed 2220 images
+Processed 2230 images
+Processed 2240 images
+Processed 2250 images
+Processed 2260 images
+Processed 2270 images
+Processed 2280 images
+Processed 2290 images
+Processed 2300 images
+Processed 2310 images
+Processed 2320 images
+Processed 2330 images
+Processed 2340 images
+Processed 2350 images
+Processed 2360 images
+Processed 2370 images
+Processed 2380 images
+Processed 2390 images
+Processed 2400 images
+Processed 2410 images
+Processed 2420 images
+Processed 2430 images
+Processed 2440 images
+Processed 2450 images
+Processed 2460 images
+Processed 2470 images
+Processed 2480 images
+Processed 2490 images
+Processed 2500 images
+Processed 2510 images
+Processed 2520 images
+Processed 2530 images
+Processed 2540 images
+Processed 2550 images
+Processed 2560 images
+Processed 2570 images
+Processed 2580 images
+Processed 2590 images
+Processed 2600 images
+Processed 2610 images
+Processed 2620 images
+Processed 2630 images
+Processed 2640 images
+Processed 2650 images
+Processed 2660 images
+Processed 2670 images
+Processed 2680 images
+Processed 2690 images
+loading annotations into memory...
+Done (t=0.23s)
+creating index...
+index created!
+Loading and preparing results...
+DONE (t=0.55s)
+creating index...
+index created!
+Running per image evaluation...
+Evaluate annotation type *keypoints*
+DONE (t=2.86s).
+Accumulating evaluation results...
+DONE (t=0.09s).
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets= 20 ] = 0.257
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets= 20 ] = 0.540
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets= 20 ] = 0.217
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets= 20 ] = 0.325
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets= 20 ] = 0.241
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 20 ] = 0.411
+ Average Recall     (AR) @[ IoU=0.50      | area=   all | maxDets= 20 ] = 0.665
+ Average Recall     (AR) @[ IoU=0.75      | area=   all | maxDets= 20 ] = 0.411
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets= 20 ] = 0.344
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets= 20 ] = 0.505
