@@ -1,0 +1,4 @@
+/home/carte/projects/pytorch_Realtime_Multi-Person_Pose_Estimation/qt_client/build/CMakeFiles/PoseQtClient.dir
+/home/carte/projects/pytorch_Realtime_Multi-Person_Pose_Estimation/qt_client/build/CMakeFiles/edit_cache.dir
+/home/carte/projects/pytorch_Realtime_Multi-Person_Pose_Estimation/qt_client/build/CMakeFiles/rebuild_cache.dir
+/home/carte/projects/pytorch_Realtime_Multi-Person_Pose_Estimation/qt_client/build/CMakeFiles/PoseQtClient_autogen.dir
