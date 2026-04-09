@@ -1,0 +1,27 @@
+{
+  "thresholds": {
+    "forward_trunk_lean_deg": 22.0,
+    "knee_angle_asym_deg": 15.0,
+    "left_knee_ankle_dev_norm": 0.38,
+    "right_knee_ankle_dev_norm": 0.38,
+    "min_mean_keypoint_conf": 0.20
+  },
+  "weights": {
+    "forward_trunk_lean_risk": 0.30,
+    "left_right_knee_asymmetry_risk": 0.25,
+    "left_knee_alignment_risk": 0.20,
+    "right_knee_alignment_risk": 0.20,
+    "low_pose_confidence": 0.05
+  },
+  "advice": {
+    "forward_trunk_lean_risk": "Excessive forward trunk lean. Reduce pace and strengthen core stability.",
+    "left_right_knee_asymmetry_risk": "Left-right knee motion asymmetry detected. Add unilateral stability and strength training.",
+    "left_knee_alignment_risk": "Left knee-ankle alignment risk is elevated. Monitor landing knee path and adjust cadence.",
+    "right_knee_alignment_risk": "Right knee-ankle alignment risk is elevated. Monitor landing knee path and adjust cadence.",
+    "low_pose_confidence": "Pose confidence is low. Improve camera angle, lighting, and resolution."
+  },
+  "risk_level": {
+    "high_score": 0.60,
+    "medium_score": 0.25
+  }
+}
