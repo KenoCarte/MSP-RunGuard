@@ -39,7 +39,17 @@ from lib.datasets.preprocessing import (
 from lib.network import im_transform
 from lib.network.rtpose_vgg import get_model
 from lib.utils.common import draw_humans
-from lib.utils.paf_to_pose import paf_to_pose_cpp
+try:
+    from lib.utils.paf_to_pose import paf_to_pose_cpp
+except Exception as exc:  # pylint: disable=broad-except
+    print(
+        "[ERROR] Failed to import paf_to_pose_cpp. "
+        "This usually means NumPy 2.x is installed while a compiled extension was built against NumPy 1.x. "
+        "Fix by installing 'numpy<2' and rebuilding pafprocess, or reinstalling the project dependencies.",
+        file=sys.stderr,
+    )
+    print(f"[ERROR] import detail: {exc}", file=sys.stderr)
+    raise
 
 
 def parse_args() -> argparse.Namespace:
@@ -96,7 +106,11 @@ def resolve_device(device_arg: str) -> torch.device:
 
 
 def load_state_dict_compat(weight_path: Path) -> Dict[str, torch.Tensor]:
-    ckpt = torch.load(str(weight_path), map_location="cpu")
+    # Prefer safe loading mode on newer torch; fallback for older versions.
+    try:
+        ckpt = torch.load(str(weight_path), map_location="cpu", weights_only=True)
+    except TypeError:
+        ckpt = torch.load(str(weight_path), map_location="cpu")
     if isinstance(ckpt, dict) and "state_dict" in ckpt:
         state_dict = ckpt["state_dict"]
     elif isinstance(ckpt, dict):

@@ -38,7 +38,17 @@ from infer.infer_once import load_state_dict_compat, resolve_device, run_model
 from lib.config import cfg, update_config
 from lib.network.rtpose_vgg import get_model
 from lib.utils.common import draw_humans
-from lib.utils.paf_to_pose import paf_to_pose_cpp
+try:
+    from lib.utils.paf_to_pose import paf_to_pose_cpp
+except Exception as exc:  # pylint: disable=broad-except
+    print(
+        "[ERROR] Failed to import paf_to_pose_cpp. "
+        "This usually means NumPy 2.x is installed while a compiled extension was built against NumPy 1.x. "
+        "Fix by installing 'numpy<2' and rebuilding pafprocess, or reinstalling the project dependencies.",
+        file=sys.stderr,
+    )
+    print(f"[ERROR] import detail: {exc}", file=sys.stderr)
+    raise
 
 from analysis.temporal_features import extract_frame_features
 from analysis.risk_scoring import load_risk_config, score_risk
