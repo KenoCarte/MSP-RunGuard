@@ -26,10 +26,12 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QSizePolicy>
 #include <QSettings>
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QStatusBar>
+#include <QScrollArea>
 #include <QTextStream>
 #include <QVBoxLayout>
 #include <QCloseEvent>
@@ -129,16 +131,60 @@ QString MainWindow::findProjectRoot() {
 }
 
 void MainWindow::buildUi() {
-    setWindowTitle(QStringLiteral("Pose Inference Qt Client"));
-    resize(1024, 700);
+    setWindowTitle(QStringLiteral("Pose Risk Analysis Workbench"));
+    resize(1180, 820);
+    setMinimumSize(1040, 740);
 
     QWidget* central = new QWidget(this);
     setCentralWidget(central);
 
     auto* mainLayout = new QVBoxLayout(central);
+    mainLayout->setContentsMargins(12, 12, 12, 10);
+    mainLayout->setSpacing(10);
 
-    auto* configGroup = new QGroupBox(QStringLiteral("Inference Settings"), this);
-    auto* configLayout = new QFormLayout(configGroup);
+    auto* configGroup = new QGroupBox(QStringLiteral("Runtime Settings"), this);
+    auto* configRootLayout = new QVBoxLayout(configGroup);
+    configRootLayout->setContentsMargins(8, 10, 8, 8);
+    configRootLayout->setSpacing(8);
+
+    auto* configScroll = new QScrollArea(this);
+    configScroll->setWidgetResizable(true);
+    configScroll->setFrameShape(QFrame::NoFrame);
+    configScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    configScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    configScroll->setMinimumHeight(160);
+    configScroll->setMaximumHeight(290);
+
+    auto* configPanelsWidget = new QWidget(this);
+    auto* configPanelsLayout = new QVBoxLayout(configPanelsWidget);
+    configPanelsLayout->setContentsMargins(0, 0, 0, 0);
+    configPanelsLayout->setSpacing(8);
+
+    auto* basicPanel = new QGroupBox(QStringLiteral("Basic Parameters"), this);
+    basicPanel->setCheckable(true);
+    basicPanel->setChecked(true);
+    auto* basicPanelLayout = new QVBoxLayout(basicPanel);
+    basicPanelLayout->setContentsMargins(8, 10, 8, 8);
+    auto* basicContent = new QWidget(this);
+    auto* basicLayout = new QFormLayout(basicContent);
+    basicLayout->setHorizontalSpacing(10);
+    basicLayout->setVerticalSpacing(6);
+    basicPanelLayout->addWidget(basicContent);
+
+    auto* advancedPanel = new QGroupBox(QStringLiteral("Advanced Parameters"), this);
+    advancedPanel->setCheckable(true);
+    advancedPanel->setChecked(false);
+    auto* advancedPanelLayout = new QVBoxLayout(advancedPanel);
+    advancedPanelLayout->setContentsMargins(8, 10, 8, 8);
+    auto* advancedContent = new QWidget(this);
+    auto* advancedLayout = new QFormLayout(advancedContent);
+    advancedLayout->setHorizontalSpacing(10);
+    advancedLayout->setVerticalSpacing(6);
+    advancedPanelLayout->addWidget(advancedContent);
+    advancedContent->setVisible(false);
+
+    connect(basicPanel, &QGroupBox::toggled, basicContent, &QWidget::setVisible);
+    connect(advancedPanel, &QGroupBox::toggled, advancedContent, &QWidget::setVisible);
 
     // 统一的“路径输入 + 浏览按钮”行构造器。
     auto buildPathRow = [this](QLineEdit*& edit, const QString& defaultText, const QObject* receiver, const char* member) {
@@ -148,7 +194,9 @@ void MainWindow::buildUi() {
         rowLayout->setSpacing(8);
 
         edit = new QLineEdit(defaultText, this);
+        edit->setMinimumHeight(28);
         auto* btn = new QPushButton(QStringLiteral("Browse"), this);
+        btn->setMinimumHeight(28);
         connect(btn, SIGNAL(clicked()), receiver, member);
 
         rowLayout->addWidget(edit, 1);
@@ -156,21 +204,22 @@ void MainWindow::buildUi() {
         return rowWidget;
     };
 
-    configLayout->addRow(QStringLiteral("Python"), buildPathRow(pythonEdit_, "python3", this, SLOT(browsePythonPath())));
-    configLayout->addRow(QStringLiteral("Script"), buildPathRow(scriptEdit_, "", this, SLOT(browseScriptPath())));
-    configLayout->addRow(QStringLiteral("Config"), buildPathRow(cfgEdit_, "", this, SLOT(browseCfgPath())));
-    configLayout->addRow(QStringLiteral("Weight"), buildPathRow(weightEdit_, "", this, SLOT(browseWeightPath())));
-    configLayout->addRow(QStringLiteral("Video"), buildPathRow(videoEdit_, "", this, SLOT(browseVideoPath())));
-    configLayout->addRow(QStringLiteral("Analysis Out Dir"), buildPathRow(analysisOutDirEdit_, "", this, SLOT(browseAnalysisOutDir())));
-    configLayout->addRow(QStringLiteral("Risk Config"), buildPathRow(riskConfigEdit_, "", this, SLOT(browseRiskConfigPath())));
-    configLayout->addRow(QStringLiteral("Summary JSON"), buildPathRow(summaryEdit_, "", this, SLOT(browseSummaryPath())));
+    basicLayout->addRow(QStringLiteral("Python"), buildPathRow(pythonEdit_, "python3", this, SLOT(browsePythonPath())));
+    basicLayout->addRow(QStringLiteral("Script"), buildPathRow(scriptEdit_, "", this, SLOT(browseScriptPath())));
+    basicLayout->addRow(QStringLiteral("Config"), buildPathRow(cfgEdit_, "", this, SLOT(browseCfgPath())));
+    basicLayout->addRow(QStringLiteral("Weight"), buildPathRow(weightEdit_, "", this, SLOT(browseWeightPath())));
+    basicLayout->addRow(QStringLiteral("Video"), buildPathRow(videoEdit_, "", this, SLOT(browseVideoPath())));
+    basicLayout->addRow(QStringLiteral("Analysis Out Dir"), buildPathRow(analysisOutDirEdit_, "", this, SLOT(browseAnalysisOutDir())));
+
+    advancedLayout->addRow(QStringLiteral("Risk Config"), buildPathRow(riskConfigEdit_, "", this, SLOT(browseRiskConfigPath())));
+    advancedLayout->addRow(QStringLiteral("Summary JSON"), buildPathRow(summaryEdit_, "", this, SLOT(browseSummaryPath())));
 
     auto* inputImageLabel = new QLabel(QStringLiteral("Input Image"), this);
     auto* inputImageRow = buildPathRow(inputEdit_, "", this, SLOT(browseInputImage()));
     auto* outputImageLabel = new QLabel(QStringLiteral("Output Image"), this);
     auto* outputImageRow = buildPathRow(outputEdit_, "", this, SLOT(browseOutputImage()));
-    configLayout->addRow(inputImageLabel, inputImageRow);
-    configLayout->addRow(outputImageLabel, outputImageRow);
+    advancedLayout->addRow(inputImageLabel, inputImageRow);
+    advancedLayout->addRow(outputImageLabel, outputImageRow);
 
     auto* videoOptRow = new QWidget(this);
     auto* videoOptLayout = new QHBoxLayout(videoOptRow);
@@ -178,19 +227,23 @@ void MainWindow::buildUi() {
     videoOptLayout->setSpacing(8);
     auto* sourceModeLabel = new QLabel(QStringLiteral("Source"), this);
     sourceModeCombo_ = new QComboBox(this);
+    sourceModeCombo_->setMinimumHeight(30);
     sourceModeCombo_->addItem(QStringLiteral("Video File"), QStringLiteral("video"));
     sourceModeCombo_->addItem(QStringLiteral("Camera"), QStringLiteral("camera"));
     connect(sourceModeCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onSourceModeChanged);
     auto* cameraLabel = new QLabel(QStringLiteral("Camera Index"), this);
     cameraIndexSpin_ = new QSpinBox(this);
+    cameraIndexSpin_->setMinimumHeight(30);
     cameraIndexSpin_->setRange(0, 8);
     cameraIndexSpin_->setValue(0);
     auto* maxSecondsLabel = new QLabel(QStringLiteral("Max Seconds"), this);
     maxSecondsSpin_ = new QSpinBox(this);
+    maxSecondsSpin_->setMinimumHeight(30);
     maxSecondsSpin_->setRange(1, 600);
     maxSecondsSpin_->setValue(20);
     auto* frameStrideLabel = new QLabel(QStringLiteral("Frame Stride"), this);
     frameStrideSpin_ = new QSpinBox(this);
+    frameStrideSpin_->setMinimumHeight(30);
     frameStrideSpin_->setRange(1, 20);
     frameStrideSpin_->setValue(1);
     saveOverlayCheck_ = new QCheckBox(QStringLiteral("Save Overlay Video"), this);
@@ -212,51 +265,80 @@ void MainWindow::buildUi() {
     videoOptLayout->addWidget(saveOverlayCheck_);
     videoOptLayout->addWidget(showLiveCheck_);
     videoOptLayout->addStretch(1);
-    configLayout->addRow(QStringLiteral("Video Options"), videoOptRow);
+    auto* basicActionRow = new QWidget(this);
+    auto* basicActionLayout = new QHBoxLayout(basicActionRow);
+    basicActionLayout->setContentsMargins(0, 0, 0, 0);
+    basicActionLayout->setSpacing(8);
 
-    auto* actionRow = new QWidget(this);
-    auto* actionLayout = new QHBoxLayout(actionRow);
-    actionLayout->setContentsMargins(0, 0, 0, 0);
-    actionLayout->setSpacing(8);
+    auto* advancedActionRow = new QWidget(this);
+    auto* advancedActionLayout = new QHBoxLayout(advancedActionRow);
+    advancedActionLayout->setContentsMargins(0, 0, 0, 0);
+    advancedActionLayout->setSpacing(8);
 
     validateButton_ = new QPushButton(QStringLiteral("Validate Config"), this);
+    validateButton_->setMinimumHeight(32);
     connect(validateButton_, &QPushButton::clicked, this, &MainWindow::validateConfiguration);
 
     batchButton_ = new QPushButton(QStringLiteral("Batch Inference"), this);
+    batchButton_->setMinimumHeight(32);
     connect(batchButton_, &QPushButton::clicked, this, &MainWindow::runBatchInference);
 
     cancelBatchButton_ = new QPushButton(QStringLiteral("Cancel Batch"), this);
+    cancelBatchButton_->setMinimumHeight(32);
     cancelBatchButton_->setEnabled(false);
     connect(cancelBatchButton_, &QPushButton::clicked, this, &MainWindow::cancelBatchInference);
 
     detectCameraButton_ = new QPushButton(QStringLiteral("Detect Camera"), this);
+    detectCameraButton_->setMinimumHeight(32);
     connect(detectCameraButton_, &QPushButton::clicked, this, &MainWindow::detectCameraIndex);
 
     runButton_ = new QPushButton(QStringLiteral("Run Inference"), this);
+    runButton_->setMinimumHeight(32);
     connect(runButton_, &QPushButton::clicked, this, &MainWindow::runInference);
 
     runVideoButton_ = new QPushButton(QStringLiteral("Run Video Analysis"), this);
+    runVideoButton_->setObjectName(QStringLiteral("primaryButton"));
+    runVideoButton_->setMinimumHeight(32);
     connect(runVideoButton_, &QPushButton::clicked, this, &MainWindow::runVideoAnalysis);
 
     saveLogButton_ = new QPushButton(QStringLiteral("Save Log"), this);
+    saveLogButton_->setMinimumHeight(32);
     connect(saveLogButton_, &QPushButton::clicked, this, &MainWindow::saveLogToFile);
 
     loadSummaryButton_ = new QPushButton(QStringLiteral("Load Summary"), this);
+    loadSummaryButton_->setMinimumHeight(32);
     connect(loadSummaryButton_, &QPushButton::clicked, this, &MainWindow::loadRiskSummary);
 
     copyAdviceButton_ = new QPushButton(QStringLiteral("Copy Advice"), this);
+    copyAdviceButton_->setMinimumHeight(32);
     connect(copyAdviceButton_, &QPushButton::clicked, this, &MainWindow::copyRiskAdvice);
 
-    actionLayout->addWidget(validateButton_);
-    actionLayout->addWidget(batchButton_);
-    actionLayout->addWidget(cancelBatchButton_);
-    actionLayout->addWidget(detectCameraButton_);
-    actionLayout->addWidget(loadSummaryButton_);
-    actionLayout->addWidget(copyAdviceButton_);
-    actionLayout->addWidget(runButton_);
-    actionLayout->addWidget(runVideoButton_);
-    actionLayout->addWidget(saveLogButton_);
-    configLayout->addRow(QString(), actionRow);
+    basicActionLayout->addWidget(detectCameraButton_);
+    basicActionLayout->addWidget(copyAdviceButton_);
+    basicActionLayout->addStretch(1);
+    basicActionLayout->addWidget(runVideoButton_);
+
+    advancedActionLayout->addWidget(validateButton_);
+    advancedActionLayout->addWidget(batchButton_);
+    advancedActionLayout->addWidget(cancelBatchButton_);
+    advancedActionLayout->addWidget(loadSummaryButton_);
+    advancedActionLayout->addWidget(runButton_);
+    advancedActionLayout->addWidget(saveLogButton_);
+    advancedLayout->addRow(QString(), advancedActionRow);
+
+    configPanelsLayout->addWidget(basicPanel);
+    configPanelsLayout->addWidget(advancedPanel);
+    configPanelsLayout->addStretch(1);
+
+    configScroll->setWidget(configPanelsWidget);
+    configRootLayout->addWidget(configScroll);
+
+    auto* quickControlGroup = new QGroupBox(QStringLiteral("Quick Controls"), this);
+    auto* quickControlLayout = new QVBoxLayout(quickControlGroup);
+    quickControlLayout->setContentsMargins(8, 8, 8, 8);
+    quickControlLayout->setSpacing(6);
+    quickControlLayout->addWidget(videoOptRow);
+    quickControlLayout->addWidget(basicActionRow);
 
     auto* previewGroup = new QGroupBox(QStringLiteral("Preview"), this);
     auto* previewLayout = new QHBoxLayout(previewGroup);
@@ -286,41 +368,71 @@ void MainWindow::buildUi() {
         inputImageRow->setVisible(false);
         outputImageLabel->setVisible(false);
         outputImageRow->setVisible(false);
+        validateButton_->setVisible(false);
         runButton_->setVisible(false);
         previewGroup->setVisible(false);
         batchButton_->setVisible(false);
         cancelBatchButton_->setVisible(false);
+        loadSummaryButton_->setVisible(false);
+        saveLogButton_->setVisible(false);
     }
 
-    mainLayout->addWidget(configGroup);
-    mainLayout->addWidget(previewGroup, 1);
+    mainLayout->addWidget(configGroup, 0);
+    mainLayout->addWidget(quickControlGroup, 0);
 
-    auto* liveGroup = new QGroupBox(QStringLiteral("Live Monitor"), this);
-    auto* liveLayout = new QVBoxLayout(liveGroup);
-    livePreviewLabel_ = new QLabel(QStringLiteral("Live preview will appear during analysis."), this);
-    livePreviewLabel_->setMinimumSize(640, 220);
-    livePreviewLabel_->setAlignment(Qt::AlignCenter);
-    livePreviewLabel_->setStyleSheet("border:1px solid #d0d7de; background:#ffffff;");
-    liveLayout->addWidget(livePreviewLabel_);
-    mainLayout->addWidget(liveGroup, 0);
+    auto* bottomRow = new QHBoxLayout();
+    bottomRow->setSpacing(10);
+    mainLayout->addLayout(bottomRow, 1);
 
-    auto* riskGroup = new QGroupBox(QStringLiteral("Risk Feedback"), this);
+    auto* riskGroup = new QGroupBox(QStringLiteral("Assessment & Advice"), this);
     auto* riskLayout = new QFormLayout(riskGroup);
+    riskLayout->setHorizontalSpacing(8);
+    riskLayout->setVerticalSpacing(3);
+    auto* levelKeyLabel = new QLabel(QStringLiteral("Level"), this);
+    auto* scoreKeyLabel = new QLabel(QStringLiteral("Score"), this);
+    auto* flagsKeyLabel = new QLabel(QStringLiteral("Flags"), this);
+    auto* adviceKeyLabel = new QLabel(QStringLiteral("Advice"), this);
+    levelKeyLabel->setStyleSheet("font-size: 11px; color: #4b5563;");
+    scoreKeyLabel->setStyleSheet("font-size: 11px; color: #4b5563;");
+    flagsKeyLabel->setStyleSheet("font-size: 11px; color: #4b5563;");
+    adviceKeyLabel->setStyleSheet("font-size: 11px; color: #4b5563;");
+    levelKeyLabel->setFixedWidth(44);
+    scoreKeyLabel->setFixedWidth(44);
+    flagsKeyLabel->setFixedWidth(44);
+    adviceKeyLabel->setFixedWidth(44);
     riskLevelValueLabel_ = new QLabel(this);
     riskScoreValueLabel_ = new QLabel(this);
     riskFlagsValueLabel_ = new QLabel(this);
+    riskLevelValueLabel_->setStyleSheet("font-size: 11px; font-weight: 700; background:#f3f6fb; border:1px solid #e2e8f0; border-radius:6px; padding:1px 6px;");
+    riskScoreValueLabel_->setStyleSheet("font-size: 11px; font-weight: 700; background:#f3f6fb; border:1px solid #e2e8f0; border-radius:6px; padding:1px 6px;");
+    riskFlagsValueLabel_->setStyleSheet("font-size: 11px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:1px 6px;");
+    riskLevelValueLabel_->setFixedHeight(24);
+    riskScoreValueLabel_->setFixedHeight(24);
+    riskFlagsValueLabel_->setFixedHeight(24);
     riskFlagsValueLabel_->setWordWrap(true);
+    riskLevelValueLabel_->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    riskScoreValueLabel_->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    riskFlagsValueLabel_->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
     riskAdviceView_ = new QPlainTextEdit(this);
     riskAdviceView_->setReadOnly(true);
-    riskAdviceView_->setMaximumHeight(110);
-    riskLayout->addRow(QStringLiteral("Level"), riskLevelValueLabel_);
-    riskLayout->addRow(QStringLiteral("Score"), riskScoreValueLabel_);
-    riskLayout->addRow(QStringLiteral("Flags"), riskFlagsValueLabel_);
-    riskLayout->addRow(QStringLiteral("Advice"), riskAdviceView_);
-    mainLayout->addWidget(riskGroup, 0);
+    riskAdviceView_->setMinimumHeight(260);
+    riskAdviceView_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    riskLayout->addRow(levelKeyLabel, riskLevelValueLabel_);
+    riskLayout->addRow(scoreKeyLabel, riskScoreValueLabel_);
+    riskLayout->addRow(flagsKeyLabel, riskFlagsValueLabel_);
+    riskLayout->addRow(adviceKeyLabel, riskAdviceView_);
 
     auto* logGroup = new QGroupBox(QStringLiteral("Run Log"), this);
     auto* logLayout = new QVBoxLayout(logGroup);
+
+    auto* liveGroup = new QGroupBox(QStringLiteral("Live Monitor"), this);
+    auto* liveLayout = new QVBoxLayout(liveGroup);
+    liveLayout->setContentsMargins(8, 12, 8, 8);
+    livePreviewLabel_ = new QLabel(QStringLiteral("Live preview will appear during analysis."), this);
+    livePreviewLabel_->setMinimumSize(640, 180);
+    livePreviewLabel_->setAlignment(Qt::AlignCenter);
+    livePreviewLabel_->setStyleSheet("border:1px solid #d0d7de; background:#ffffff;");
+    liveLayout->addWidget(livePreviewLabel_);
 
     auto* batchStatusRow = new QWidget(this);
     auto* batchStatusLayout = new QHBoxLayout(batchStatusRow);
@@ -339,7 +451,16 @@ void MainWindow::buildUi() {
     logView_->setMaximumBlockCount(500);
     new LogHighlighter(logView_->document());
     logLayout->addWidget(logView_);
-    mainLayout->addWidget(logGroup, 0);
+
+    auto* rightColumn = new QWidget(this);
+    auto* rightLayout = new QVBoxLayout(rightColumn);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
+    rightLayout->setSpacing(10);
+    rightLayout->addWidget(liveGroup, 2);
+    rightLayout->addWidget(logGroup, 1);
+
+    bottomRow->addWidget(riskGroup, 1);
+    bottomRow->addWidget(rightColumn, 2);
 
     statusBar()->showMessage(QStringLiteral("Ready"));
     setRiskPanelDefaults();
@@ -347,15 +468,17 @@ void MainWindow::buildUi() {
 
     setStyleSheet(
         // 轻量统一主题：提升可读性并减少控件视觉噪声。
-        "QWidget { background: #f6f8fb; color: #1f2937; }"
-        "QGroupBox { border: 1px solid #d8dee8; border-radius: 10px; margin-top: 8px; font-weight: 600; }"
-        "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; }"
-        "QLineEdit, QSpinBox, QComboBox, QPlainTextEdit { background: #ffffff; border: 1px solid #c8d0dc; border-radius: 6px; padding: 4px; }"
-        "QPushButton { background: #e8eef8; border: 1px solid #c4d3ea; border-radius: 6px; padding: 5px 10px; }"
-        "QPushButton:hover { background: #dce8fa; }"
-        "QPushButton:disabled { background: #eef1f6; color: #9aa4b2; border-color: #dde3ec; }"
-        "QProgressBar { border: 1px solid #c8d0dc; border-radius: 6px; text-align: center; background: #ffffff; }"
-        "QProgressBar::chunk { background: #3b82f6; border-radius: 5px; }"
+        "QWidget { background: #f4f7fb; color: #1f2a37; }"
+        "QGroupBox { border: 1px solid #d3dbe7; border-radius: 10px; margin-top: 8px; font-weight: 600; background: #fbfdff; }"
+        "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 6px; }"
+        "QLineEdit, QSpinBox, QComboBox, QPlainTextEdit { background: #ffffff; border: 1px solid #c5cfdd; border-radius: 7px; selection-background-color: #93c5fd; }"
+        "QPushButton { background: #edf3fb; border: 1px solid #c5d4e8; border-radius: 7px; padding: 4px 10px; }"
+        "QPushButton:hover { background: #e2ecfb; }"
+        "QPushButton#primaryButton { background: #2563eb; color: #ffffff; border: 1px solid #1d4ed8; font-weight: 700; }"
+        "QPushButton#primaryButton:hover { background: #1d4ed8; }"
+        "QPushButton:disabled { background: #eef2f7; color: #9ba7b7; border-color: #dbe3ef; }"
+        "QProgressBar { border: 1px solid #c8d0dc; border-radius: 7px; text-align: center; background: #ffffff; }"
+        "QProgressBar::chunk { background: #3b82f6; border-radius: 6px; }"
     );
 }
 
@@ -521,7 +644,14 @@ void MainWindow::setRiskPanelDefaults() {
     if (riskLevelValueLabel_) riskLevelValueLabel_->setStyleSheet(QString());
     if (riskScoreValueLabel_) riskScoreValueLabel_->setText(QStringLiteral("N/A"));
     if (riskFlagsValueLabel_) riskFlagsValueLabel_->setText(QStringLiteral("N/A"));
-    if (riskAdviceView_) riskAdviceView_->setPlainText(QStringLiteral("No risk summary loaded."));
+    if (riskAdviceView_) {
+        riskAdviceView_->setPlainText(
+            QStringLiteral("No risk summary loaded.\n"
+                           "Run video analysis first, then the panel will show\n"
+                           "1) risk overview\n"
+                           "2) key movement issues\n"
+                           "3) actionable training advice."));
+    }
 }
 
 void MainWindow::showImageToLabel(const QString& imagePath, QLabel* targetLabel) {
@@ -1360,17 +1490,101 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
 
     riskLevelValueLabel_->setText(level);
     if (level == QStringLiteral("high")) {
-        riskLevelValueLabel_->setStyleSheet(QStringLiteral("color:#d32f2f; font-weight:700;"));
+        riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; color:#b91c1c; font-weight:700; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; padding:2px 6px;"));
     } else if (level == QStringLiteral("medium")) {
-        riskLevelValueLabel_->setStyleSheet(QStringLiteral("color:#f57c00; font-weight:700;"));
+        riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; color:#b45309; font-weight:700; background:#ffedd5; border:1px solid #fed7aa; border-radius:6px; padding:2px 6px;"));
     } else if (level == QStringLiteral("low")) {
-        riskLevelValueLabel_->setStyleSheet(QStringLiteral("color:#2e7d32; font-weight:700;"));
+        riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; color:#166534; font-weight:700; background:#dcfce7; border:1px solid #bbf7d0; border-radius:6px; padding:2px 6px;"));
     } else {
-        riskLevelValueLabel_->setStyleSheet(QString());
+        riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; font-weight:700; background:#f3f6fb; border:1px solid #e2e8f0; border-radius:6px; padding:2px 6px;"));
     }
+
+    const QString levelLower = level.toLower();
+    QString levelDesc;
+    if (levelLower == QStringLiteral("high")) {
+        levelDesc = QStringLiteral("High - urgent correction needed");
+    } else if (levelLower == QStringLiteral("medium")) {
+        levelDesc = QStringLiteral("Medium - monitor and improve this week");
+    } else if (levelLower == QStringLiteral("low")) {
+        levelDesc = QStringLiteral("Low - maintain good movement quality");
+    } else {
+        levelDesc = QStringLiteral("Unknown");
+    }
+
+    QStringList detailedAdvice;
+    detailedAdvice << QStringLiteral("Overall Assessment");
+    detailedAdvice << QStringLiteral("- Risk Level: %1").arg(levelDesc);
+    detailedAdvice << QStringLiteral("- Risk Score: %1").arg(scoreText);
+    detailedAdvice << QStringLiteral("- Current Flags: %1").arg(flags.isEmpty() ? QStringLiteral("none") : flags.join(QStringLiteral(", ")));
+
+    if (!flags.isEmpty()) {
+        int idx = 1;
+        detailedAdvice << QString();
+        detailedAdvice << QStringLiteral("Targeted Corrections");
+        for (const QString& f : flags) {
+            if (f == QStringLiteral("forward_trunk_lean_risk")) {
+                detailedAdvice << QStringLiteral("%1. Trunk Lean Control").arg(idx++);
+                detailedAdvice << QStringLiteral("   - Signal: Forward lean is excessive during support phase.");
+                detailedAdvice << QStringLiteral("   - Action: Lower speed 10-15%, keep chest lifted, tighten core before foot strike.");
+                detailedAdvice << QStringLiteral("   - Drill: 3 sets of 30s wall-lean posture hold + 2 sets of slow high-knee runs.");
+            } else if (f == QStringLiteral("left_right_knee_asymmetry_risk")) {
+                detailedAdvice << QStringLiteral("%1. Left-Right Symmetry").arg(idx++);
+                detailedAdvice << QStringLiteral("   - Signal: Knee movement differs between sides.");
+                detailedAdvice << QStringLiteral("   - Action: Add unilateral strength training and reduce fatigue load on weak side.");
+                detailedAdvice << QStringLiteral("   - Drill: Split squat 3x8 each side, single-leg bridge 3x10 each side.");
+            } else if (f == QStringLiteral("left_knee_alignment_risk")) {
+                detailedAdvice << QStringLiteral("%1. Left Knee Alignment").arg(idx++);
+                detailedAdvice << QStringLiteral("   - Signal: Left knee path may collapse inward/outward.");
+                detailedAdvice << QStringLiteral("   - Action: Focus on knee-over-toe alignment at landing and push-off.");
+                detailedAdvice << QStringLiteral("   - Drill: Lateral band walk 3x12 + single-leg squat to box 3x6.");
+            } else if (f == QStringLiteral("right_knee_alignment_risk")) {
+                detailedAdvice << QStringLiteral("%1. Right Knee Alignment").arg(idx++);
+                detailedAdvice << QStringLiteral("   - Signal: Right knee tracking is unstable under load.");
+                detailedAdvice << QStringLiteral("   - Action: Improve hip-knee-ankle alignment and shorten stride temporarily.");
+                detailedAdvice << QStringLiteral("   - Drill: Step-down control 3x8 + resisted terminal knee extension 3x12.");
+            } else if (f == QStringLiteral("low_pose_confidence")) {
+                detailedAdvice << QStringLiteral("%1. Capture Quality").arg(idx++);
+                detailedAdvice << QStringLiteral("   - Signal: Pose confidence is low, result reliability is reduced.");
+                detailedAdvice << QStringLiteral("   - Action: Increase lighting, keep full body in frame, avoid motion blur.");
+                detailedAdvice << QStringLiteral("   - Drill: Re-record with fixed camera height at hip level and side/front view.");
+            } else {
+                detailedAdvice << QStringLiteral("%1. %2").arg(idx++).arg(f);
+                detailedAdvice << QStringLiteral("   - Action: Check this metric trend in the next 3 sessions and adjust training load.");
+            }
+        }
+    } else {
+        detailedAdvice << QString();
+        detailedAdvice << QStringLiteral("Targeted Corrections");
+        detailedAdvice << QStringLiteral("- No obvious high-risk flag was detected in this sample.");
+        detailedAdvice << QStringLiteral("- Continue regular technique check every 3-5 training sessions.");
+    }
+
+    detailedAdvice << QString();
+    detailedAdvice << QStringLiteral("Training Plan (Next 7 Days)");
+    if (levelLower == QStringLiteral("high")) {
+        detailedAdvice << QStringLiteral("- Day 1-2: Reduce high-impact training volume by 30-40%.");
+        detailedAdvice << QStringLiteral("- Day 3-5: Add technique drills first, then low-intensity running.");
+        detailedAdvice << QStringLiteral("- Day 6-7: Re-test with camera and compare key flags.");
+    } else if (levelLower == QStringLiteral("medium")) {
+        detailedAdvice << QStringLiteral("- Keep normal volume but reduce pace peaks and fatigue accumulation.");
+        detailedAdvice << QStringLiteral("- Insert 10-15 minutes corrective drills before each session.");
+        detailedAdvice << QStringLiteral("- Re-check movement quality within one week.");
+    } else {
+        detailedAdvice << QStringLiteral("- Maintain current plan and add light stability work 2-3 times/week.");
+        detailedAdvice << QStringLiteral("- Keep collecting clips under consistent camera setup for trend tracking.");
+    }
+
+    if (!advice.isEmpty()) {
+        detailedAdvice << QString();
+        detailedAdvice << QStringLiteral("Model Notes");
+        for (const QString& a : advice) {
+            detailedAdvice << QStringLiteral("- %1").arg(a);
+        }
+    }
+
     riskScoreValueLabel_->setText(scoreText);
     riskFlagsValueLabel_->setText(flags.isEmpty() ? QStringLiteral("none") : flags.join(QStringLiteral(" | ")));
-    riskAdviceView_->setPlainText(advice.isEmpty() ? QStringLiteral("No advice in summary.") : advice.join(QStringLiteral("\n")));
+    riskAdviceView_->setPlainText(detailedAdvice.join(QStringLiteral("\n")));
 
     appendLog(QStringLiteral("[SUMMARY] loaded: %1 level=%2 score=%3").arg(summaryPath, level, scoreText));
     statusBar()->showMessage(interactive ? QStringLiteral("Risk summary loaded.") : QStringLiteral("Risk summary auto-updated."), 5000);

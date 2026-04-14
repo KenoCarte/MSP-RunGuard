@@ -913,6 +913,8 @@ CMakeFiles/PoseQtClient.dir/src/MainWindow.cpp.o: ../src/MainWindow.cpp \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qstandardpaths.h \
   /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QStatusBar \
   /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qstatusbar.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QScrollArea \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qscrollarea.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QTextStream \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qtextstream.h \
   /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QVBoxLayout \
@@ -1344,6 +1346,8 @@ CMakeFiles/PoseQtClient.dir/src/main.cpp.o: ../src/main.cpp \
 /usr/include/x86_64-linux-gnu/qt6/QtCore/QTimer:
 
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qstyle.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qabstractslider.h:
 
 /usr/include/c++/11/pstl/glue_numeric_defs.h:
 
@@ -1877,8 +1881,6 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qdatastream.h:
 
-/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qabstractslider.h:
-
 /usr/include/strings.h:
 
 /usr/include/x86_64-linux-gnu/bits/struct_rwlock.h:
@@ -1900,6 +1902,8 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 /usr/include/x86_64-linux-gnu/bits/endianness.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qfilesystemwatcher.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qscrollarea.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:
 
@@ -2073,8 +2077,6 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qvarlengtharray.h:
 
-/usr/include/x86_64-linux-gnu/qt6/QtCore/qiterator.h:
-
 /usr/include/c++/11/bits/memoryfwd.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qscopedpointer.h:
@@ -2090,6 +2092,10 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qiterable.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qmetacontainer.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qslider.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtCore/qcontainerinfo.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qtaggedpointer.h:
 
@@ -2415,6 +2421,10 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qstatusbar.h:
 
+/usr/include/x86_64-linux-gnu/qt6/QtCore/qiterator.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtWidgets/QScrollArea:
+
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qdiriterator.h:
 
 /usr/include/sched.h:
@@ -2432,7 +2442,3 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QComboBox:
 
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qabstractitemdelegate.h:
-
-/usr/include/x86_64-linux-gnu/qt6/QtCore/qcontainerinfo.h:
-
-/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qslider.h:
