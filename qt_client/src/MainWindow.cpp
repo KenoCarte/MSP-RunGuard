@@ -339,6 +339,9 @@ void MainWindow::buildUi() {
     quickControlLayout->setSpacing(6);
     quickControlLayout->addWidget(videoOptRow);
     quickControlLayout->addWidget(basicActionRow);
+    operationHintLabel_ = new QLabel(QStringLiteral("Status: Ready. Configure source and press Run Video Analysis."), this);
+    operationHintLabel_->setStyleSheet("color:#334155; background:#eef5ff; border:1px solid #c7dbff; border-radius:6px; padding:4px 8px;");
+    quickControlLayout->addWidget(operationHintLabel_);
 
     auto* previewGroup = new QGroupBox(QStringLiteral("Preview"), this);
     auto* previewLayout = new QHBoxLayout(previewGroup);
@@ -583,6 +586,23 @@ void MainWindow::setUiRunning(bool running) {
     if (validateButton_) validateButton_->setEnabled(!running);
     if (detectCameraButton_) detectCameraButton_->setEnabled(!running);
     if (batchButton_) batchButton_->setEnabled(!running && !batchCancelRequested_);
+    if (running) {
+        setOperationHint(QStringLiteral("Status: Running analysis. Please wait for summary output."));
+    } else {
+        setOperationHint(QStringLiteral("Status: Idle. You can update settings and run again."));
+    }
+}
+
+void MainWindow::setOperationHint(const QString& hint, bool isError) {
+    if (!operationHintLabel_) {
+        return;
+    }
+    operationHintLabel_->setText(hint);
+    if (isError) {
+        operationHintLabel_->setStyleSheet("color:#991b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; padding:4px 8px;");
+    } else {
+        operationHintLabel_->setStyleSheet("color:#334155; background:#eef5ff; border:1px solid #c7dbff; border-radius:6px; padding:4px 8px;");
+    }
 }
 
 QString MainWindow::formatEtaSeconds(qint64 seconds) {
@@ -854,14 +874,43 @@ void MainWindow::runVideoAnalysis() {
     const QString riskConfigPath = riskConfigEdit_->text().trimmed();
 
     if (pythonPath.isEmpty() || cfgPath.isEmpty() || weightPath.isEmpty() || outDir.isEmpty()) {
+        setOperationHint(QStringLiteral("Status: Missing required runtime paths."), true);
         QMessageBox::warning(this, QStringLiteral("Invalid arguments"), QStringLiteral("Please fill Python/cfg/weight/out-dir."));
         return;
     }
+    if ((pythonPath.contains('/') || pythonPath.contains('\\')) && !QFileInfo::exists(pythonPath)) {
+        setOperationHint(QStringLiteral("Status: Python executable path is invalid."), true);
+        QMessageBox::warning(this, QStringLiteral("Invalid Python"), QStringLiteral("Python executable does not exist."));
+        return;
+    }
+
+    // Preflight dependency check to provide actionable guidance before starting long jobs.
+    QProcess depProbe;
+    depProbe.setProcessEnvironment(QProcessEnvironment::systemEnvironment());
+    depProbe.start(pythonPath, QStringList() << "-c" << "import torch,cv2,numpy;print('deps-ok')");
+    if (!depProbe.waitForStarted(8000)) {
+        setOperationHint(QStringLiteral("Status: Failed to start Python preflight check."), true);
+        QMessageBox::warning(this, QStringLiteral("Preflight failed"), QStringLiteral("Cannot start Python process for dependency check."));
+        return;
+    }
+    if (!depProbe.waitForFinished(15000) || depProbe.exitCode() != 0) {
+        const QString depErr = QString::fromLocal8Bit(depProbe.readAllStandardError()).trimmed();
+        appendLog(QStringLiteral("[VIDEO][PRECHECK][FAIL] %1").arg(depErr));
+        setOperationHint(QStringLiteral("Status: Dependency precheck failed. Check log for missing package."), true);
+        QMessageBox::warning(
+            this,
+            QStringLiteral("Dependency check failed"),
+            QStringLiteral("Python dependencies are not ready.\n\nDetails:\n%1").arg(depErr.isEmpty() ? QStringLiteral("Unknown import error.") : depErr));
+        return;
+    }
+
     if (!QFileInfo::exists(cfgPath) || !QFileInfo::exists(weightPath)) {
+        setOperationHint(QStringLiteral("Status: cfg/weight file path invalid."), true);
         QMessageBox::warning(this, QStringLiteral("Invalid path"), QStringLiteral("cfg/weight path contains non-existing item."));
         return;
     }
     if (sourceMode == QStringLiteral("video") && (videoPath.isEmpty() || !QFileInfo::exists(videoPath))) {
+        setOperationHint(QStringLiteral("Status: Video source is missing or invalid."), true);
         QMessageBox::warning(this, QStringLiteral("Invalid video"), QStringLiteral("Video path is empty or does not exist."));
         return;
     }
@@ -878,10 +927,12 @@ void MainWindow::runVideoAnalysis() {
                                "2) Enable WSL camera/device passthrough and ensure /dev/video* exists.")
                     .arg(devPath));
             appendLog(QStringLiteral("[VIDEO][WARN] camera device missing: %1").arg(devPath));
+            setOperationHint(QStringLiteral("Status: Camera device is unavailable in current environment."), true);
             return;
         }
     }
     if (!riskConfigPath.isEmpty() && !QFileInfo::exists(riskConfigPath)) {
+        setOperationHint(QStringLiteral("Status: risk config path invalid."), true);
         QMessageBox::warning(this, QStringLiteral("Invalid risk config"), QStringLiteral("risk config file does not exist."));
         return;
     }
@@ -889,6 +940,7 @@ void MainWindow::runVideoAnalysis() {
     const QString root = findProjectRoot();
     const QString analysisScript = QDir(root).filePath("analysis/run_temporal_analysis.py");
     if (!QFileInfo::exists(analysisScript)) {
+        setOperationHint(QStringLiteral("Status: analysis script missing."), true);
         QMessageBox::warning(this, QStringLiteral("Missing script"), QStringLiteral("analysis/run_temporal_analysis.py not found."));
         return;
     }
@@ -963,6 +1015,7 @@ void MainWindow::runVideoAnalysis() {
                   .arg(outDir)
                   .arg(frameStrideSpin_ ? frameStrideSpin_->value() : 1)
                   .arg(maxSeconds));
+    setOperationHint(QStringLiteral("Status: Video analysis started. Waiting for live preview and summary..."));
     if (showLiveCheck_ && showLiveCheck_->isChecked() && sourceMode == QStringLiteral("camera")) {
         appendLog(QStringLiteral("[VIDEO] live preview enabled (press q in preview window to stop early)."));
     }
@@ -1517,6 +1570,42 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
     detailedAdvice << QStringLiteral("- Risk Score: %1").arg(scoreText);
     detailedAdvice << QStringLiteral("- Current Flags: %1").arg(flags.isEmpty() ? QStringLiteral("none") : flags.join(QStringLiteral(", ")));
 
+    const QJsonObject explainability = analysis.value(QStringLiteral("explainability")).toObject();
+    const QJsonArray contributions = explainability.value(QStringLiteral("score_contributions")).toArray();
+    const QJsonArray metricChecks = explainability.value(QStringLiteral("metric_checks")).toArray();
+    if (!explainability.isEmpty()) {
+        detailedAdvice << QString();
+        detailedAdvice << QStringLiteral("Why This Score");
+        if (!contributions.isEmpty()) {
+            detailedAdvice << QStringLiteral("- Score Contributions:");
+            for (const QJsonValue& item : contributions) {
+                const QJsonObject obj = item.toObject();
+                detailedAdvice << QStringLiteral("  * %1: +%2")
+                                    .arg(obj.value(QStringLiteral("flag")).toString())
+                                    .arg(QString::number(obj.value(QStringLiteral("weight")).toDouble(), 'f', 3));
+            }
+        } else {
+            detailedAdvice << QStringLiteral("- No rule was triggered, score remains baseline (0.000).");
+        }
+
+        if (!metricChecks.isEmpty()) {
+            detailedAdvice << QStringLiteral("- Metric vs Threshold:");
+            for (const QJsonValue& item : metricChecks) {
+                const QJsonObject obj = item.toObject();
+                const QJsonValue value = obj.value(QStringLiteral("value"));
+                const QString valueText = value.isDouble() ? QString::number(value.toDouble(), 'f', 3) : QStringLiteral("N/A");
+                const QString relation = obj.value(QStringLiteral("relation")).toString();
+                const QString trig = obj.value(QStringLiteral("triggered")).toBool() ? QStringLiteral("TRIGGERED") : QStringLiteral("ok");
+                detailedAdvice << QStringLiteral("  * %1 = %2 (%3 %4) -> %5")
+                                    .arg(obj.value(QStringLiteral("metric")).toString())
+                                    .arg(valueText)
+                                    .arg(relation)
+                                    .arg(QString::number(obj.value(QStringLiteral("threshold")).toDouble(), 'f', 3))
+                                    .arg(trig);
+            }
+        }
+    }
+
     if (!flags.isEmpty()) {
         int idx = 1;
         detailedAdvice << QString();
@@ -1587,7 +1676,16 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
     riskAdviceView_->setPlainText(detailedAdvice.join(QStringLiteral("\n")));
 
     appendLog(QStringLiteral("[SUMMARY] loaded: %1 level=%2 score=%3").arg(summaryPath, level, scoreText));
+    const QJsonObject perfObj = root.value(QStringLiteral("performance")).toObject();
+    if (!perfObj.isEmpty()) {
+        appendLog(QStringLiteral("[PERF] infer_ms=%1 pose_ms=%2 feature_ms=%3 fps=%4")
+                      .arg(perfObj.value(QStringLiteral("avg_infer_ms")).toDouble())
+                      .arg(perfObj.value(QStringLiteral("avg_pose_decode_ms")).toDouble())
+                      .arg(perfObj.value(QStringLiteral("avg_feature_ms")).toDouble())
+                      .arg(perfObj.value(QStringLiteral("throughput_fps")).toDouble()));
+    }
     statusBar()->showMessage(interactive ? QStringLiteral("Risk summary loaded.") : QStringLiteral("Risk summary auto-updated."), 5000);
+    setOperationHint(QStringLiteral("Status: Summary loaded successfully. Review Advice and diagnostics."));
     saveUiSettings();
     refreshSummaryWatcher();
     return true;
@@ -1672,6 +1770,7 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
             } else {
                 statusBar()->showMessage(QStringLiteral("Video analysis done."), 8000);
             }
+            setOperationHint(QStringLiteral("Status: Video analysis completed successfully."));
             taskMode_ = TaskMode::None;
             return;
         }
@@ -1695,6 +1794,7 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
             statusBar()->showMessage(QStringLiteral("Done."));
         }
         if (!stdOut.trimmed().isEmpty()) appendLog(QStringLiteral("[OK] %1").arg(stdOut.trimmed()));
+        setOperationHint(QStringLiteral("Status: Inference completed successfully."));
         taskMode_ = TaskMode::None;
         return;
     }
@@ -1710,6 +1810,7 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
         }
         if (!stdOut.trimmed().isEmpty()) appendLog(QStringLiteral("[VIDEO][FAIL][STDOUT] %1").arg(stdOut.trimmed()));
         if (!stdErr.trimmed().isEmpty()) appendLog(QStringLiteral("[VIDEO][FAIL][STDERR] %1").arg(stdErr.trimmed()));
+        setOperationHint(QStringLiteral("Status: Video analysis failed. Check stderr and precheck logs."), true);
         QMessageBox::critical(
             this,
             QStringLiteral("Video analysis failed"),
@@ -1724,6 +1825,7 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
     statusBar()->showMessage(QStringLiteral("Inference failed"));
     if (!stdOut.trimmed().isEmpty()) appendLog(QStringLiteral("[FAIL][STDOUT] %1").arg(stdOut.trimmed()));
     if (!stdErr.trimmed().isEmpty()) appendLog(QStringLiteral("[FAIL][STDERR] %1").arg(stdErr.trimmed()));
+    setOperationHint(QStringLiteral("Status: Inference failed. Check output log for details."), true);
     QMessageBox::critical(
         this,
         QStringLiteral("Inference failed"),

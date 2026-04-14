@@ -903,6 +903,8 @@ CMakeFiles/PoseQtClient.dir/src/MainWindow.cpp.o: ../src/MainWindow.cpp \
   /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qpushbutton.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QRegularExpression \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qregularexpression.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QSizePolicy \
+  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qsizepolicy.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QSettings \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qsettings.h \
   /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QSpinBox \
@@ -1349,6 +1351,8 @@ CMakeFiles/PoseQtClient.dir/src/main.cpp.o: ../src/main.cpp \
 
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qabstractslider.h:
 
+/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qstyleoption.h:
+
 /usr/include/c++/11/pstl/glue_numeric_defs.h:
 
 /usr/include/c++/11/clocale:
@@ -1685,8 +1689,6 @@ PoseQtClient_autogen/UVLADIE3JM/moc_MainWindow.cpp:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qjsonobject.h:
 
-/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
-
 /usr/include/c++/11/bits/concept_check.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/QProcessEnvironment:
@@ -1980,8 +1982,6 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 /usr/include/c++/11/ext/string_conversions.h:
 
 /usr/include/c++/11/cstdio:
-
-/usr/include/x86_64-linux-gnu/qt6/QtWidgets/qstyleoption.h:
 
 /usr/include/stdio.h:
 
@@ -2314,6 +2314,10 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qdialog.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/QFileInfo:
+
+/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtWidgets/QSizePolicy:
 
 /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qgridlayout.h:
 

@@ -65,6 +65,7 @@ private:
     bool validatePaths(QString* errorMessage = nullptr) const;
     QStringList buildInferenceArgs(const QString& inputPath, const QString& outputPath) const;
     void appendLog(const QString& line);
+    void setOperationHint(const QString& hint, bool isError = false);
     void setRiskPanelDefaults();
     void refreshSummaryWatcher();
     bool loadRiskSummaryFromPath(const QString& summaryPath, bool interactive);
@@ -102,6 +103,7 @@ protected:
     QLabel* riskScoreValueLabel_ = nullptr;
     QLabel* riskFlagsValueLabel_ = nullptr;
     QLabel* livePreviewLabel_ = nullptr;
+    QLabel* operationHintLabel_ = nullptr;
     QPlainTextEdit* riskAdviceView_ = nullptr;
     QPlainTextEdit* logView_ = nullptr;
     QProgressBar* batchProgressBar_ = nullptr;

@@ -905,6 +905,8 @@ CMakeFiles/PoseQtClient.dir/src/MainWindow.cpp.o
  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qpushbutton.h
  /usr/include/x86_64-linux-gnu/qt6/QtCore/QRegularExpression
  /usr/include/x86_64-linux-gnu/qt6/QtCore/qregularexpression.h
+ /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QSizePolicy
+ /usr/include/x86_64-linux-gnu/qt6/QtWidgets/qsizepolicy.h
  /usr/include/x86_64-linux-gnu/qt6/QtCore/QSettings
  /usr/include/x86_64-linux-gnu/qt6/QtCore/qsettings.h
  /usr/include/x86_64-linux-gnu/qt6/QtWidgets/QSpinBox

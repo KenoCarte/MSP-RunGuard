@@ -189,8 +189,12 @@ def main() -> int:
     writer = None
     frame_idx = 0
     processed = 0
+    skipped_frames = 0
     rows: List[Dict[str, Optional[float]]] = []
     capture_t0 = time.perf_counter()
+    infer_time_total = 0.0
+    pose_time_total = 0.0
+    feature_time_total = 0.0
 
     fieldnames = [
         "frame_idx",
@@ -228,40 +232,54 @@ def main() -> int:
                 continue
 
             h, w = frame.shape[:2]
-            paf, heatmap, _ = run_model(model, frame, args.preprocess, device)
-            humans = paf_to_pose_cpp(heatmap, paf, cfg)
-            primary = _pick_primary_human(humans)
+            try:
+                t_infer0 = time.perf_counter()
+                paf, heatmap, _ = run_model(model, frame, args.preprocess, device)
+                infer_time_total += time.perf_counter() - t_infer0
 
-            if args.save_overlay_video:
-                if writer is None:
-                    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-                    writer = cv2.VideoWriter(str(overlay_path), fourcc, fps / args.frame_stride, (w, h))
-                overlay_frame = draw_humans(frame, humans)
-                writer.write(overlay_frame)
-            else:
-                overlay_frame = draw_humans(frame, humans) if args.show_live else None
+                t_pose0 = time.perf_counter()
+                humans = paf_to_pose_cpp(heatmap, paf, cfg)
+                pose_time_total += time.perf_counter() - t_pose0
 
-            if preview_image_path is not None:
-                if overlay_frame is None:
+                primary = _pick_primary_human(humans)
+
+                if args.save_overlay_video:
+                    if writer is None:
+                        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                        writer = cv2.VideoWriter(str(overlay_path), fourcc, fps / args.frame_stride, (w, h))
                     overlay_frame = draw_humans(frame, humans)
-                if processed % args.preview_interval == 0:
-                    cv2.imwrite(str(preview_image_path), overlay_frame)
+                    writer.write(overlay_frame)
+                else:
+                    overlay_frame = draw_humans(frame, humans) if args.show_live else None
 
-            if args.show_live:
-                if overlay_frame is None:
-                    overlay_frame = draw_humans(frame, humans)
-                cv2.imshow("Temporal Analysis Live", overlay_frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    print("[INFO] live preview interrupted by user")
-                    break
+                if preview_image_path is not None:
+                    if overlay_frame is None:
+                        overlay_frame = draw_humans(frame, humans)
+                    if processed % args.preview_interval == 0:
+                        cv2.imwrite(str(preview_image_path), overlay_frame)
 
-            if primary is not None:
-                parts = _extract_parts_px(primary, w, h)
-                feat = extract_frame_features(parts, w, h)
-            else:
-                feat = {k: None for k in fieldnames if k not in ("frame_idx", "timestamp_sec")}
-                feat["frame_w"] = float(w)
-                feat["frame_h"] = float(h)
+                if args.show_live:
+                    if overlay_frame is None:
+                        overlay_frame = draw_humans(frame, humans)
+                    cv2.imshow("Temporal Analysis Live", overlay_frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        print("[INFO] live preview interrupted by user")
+                        break
+
+                if primary is not None:
+                    t_feat0 = time.perf_counter()
+                    parts = _extract_parts_px(primary, w, h)
+                    feat = extract_frame_features(parts, w, h)
+                    feature_time_total += time.perf_counter() - t_feat0
+                else:
+                    feat = {k: None for k in fieldnames if k not in ("frame_idx", "timestamp_sec")}
+                    feat["frame_w"] = float(w)
+                    feat["frame_h"] = float(h)
+            except Exception as exc:  # pylint: disable=broad-except
+                skipped_frames += 1
+                print(f"[WARN] frame_idx={frame_idx} skipped due to processing error: {exc}")
+                frame_idx += 1
+                continue
 
             feat["frame_idx"] = frame_idx
             feat["timestamp_sec"] = frame_idx / fps
@@ -271,7 +289,9 @@ def main() -> int:
 
             processed += 1
             if processed % 20 == 0:
-                print(f"[INFO] processed_frames={processed} frame_idx={frame_idx}")
+                elapsed = max(1e-6, time.perf_counter() - capture_t0)
+                throughput = processed / elapsed
+                print(f"[INFO] processed_frames={processed} frame_idx={frame_idx} throughput_fps={throughput:.2f}")
 
             frame_idx += 1
 
@@ -294,10 +314,17 @@ def main() -> int:
         "fps": fps,
         "frame_stride": args.frame_stride,
         "processed_frames": processed,
+        "skipped_frames": skipped_frames,
         "features_csv": str(csv_path),
         "overlay_video": str(overlay_path) if args.save_overlay_video else None,
         "preview_image": str(preview_image_path) if preview_image_path is not None else None,
         "analysis": summary,
+        "performance": {
+            "avg_infer_ms": (infer_time_total / processed * 1000.0) if processed > 0 else None,
+            "avg_pose_decode_ms": (pose_time_total / processed * 1000.0) if processed > 0 else None,
+            "avg_feature_ms": (feature_time_total / processed * 1000.0) if processed > 0 else None,
+            "throughput_fps": (processed / max(1e-6, time.perf_counter() - capture_t0)) if processed > 0 else 0.0,
+        },
         "risk_config": str(risk_config_path) if risk_config_path else "analysis/risk_config.json",
         "elapsed_sec": time.perf_counter() - t0,
     }
