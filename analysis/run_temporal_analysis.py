@@ -181,7 +181,8 @@ def main() -> int:
             if cap is None:
                 print(f"[ERROR] cannot open camera index {args.camera_index}", file=sys.stderr)
                 return 8
-
+            
+    cap.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))
     fps = cap.get(cv2.CAP_PROP_FPS)
     if fps <= 0:
         fps = 30.0
