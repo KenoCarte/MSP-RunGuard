@@ -1,3 +1,0 @@
-[submodule "pytorch-lightning"]
-	path = pytorch-lightning
-	url = https://github.com/williamFalcon/pytorch-lightning
