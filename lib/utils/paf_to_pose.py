@@ -12,14 +12,14 @@ from lib.utils.common import Human, BodyPart, CocoPart, CocoColors, CocoPairsRen
 # Neck->LShoulder, so joint_to_limb_heatmap_relationship[1] represents the
 # indices of heatmaps to look for joints: neck=1, LShoulder=5
 
-joint_to_limb_heatmap_relationship = [[1, 2], [2, 3], [3, 4], [1, 5], [5, 6], [6, 7], [1, 0]]
+joint_to_limb_heatmap_relationship = [list(pair) for pair in CocoPairsRender]
 
 # PAF indices containing the x and y coordinates of the PAF for a given limb.
 # Eg: limb_type=1 is Neck->LShoulder, so
 # PAFneckLShoulder_x=paf_xy_coords_per_limb[1][0] and
 # PAFneckLShoulder_y=paf_xy_coords_per_limb[1][1]
-paf_xy_coords_per_limb = np.arange(14).reshape(7, 2)
 NUM_LIMBS = len(joint_to_limb_heatmap_relationship)
+paf_xy_coords_per_limb = np.arange(NUM_LIMBS * 2).reshape(NUM_LIMBS, 2)
 
 
 def find_peaks(param, img):

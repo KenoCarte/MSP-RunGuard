@@ -3,6 +3,19 @@ data/*
 *.pth
 *.o
 *.so
+.gitignore
+.gitmodules
+*.log
+/evaluate.evaluation
+*.Identifier
+/tatus
+.github/
+.vscode/
+dist/
+data/
+logs/
+network/
+scripts/
 
 .ipynb_checkpoints
 notebooks/*.pkl
