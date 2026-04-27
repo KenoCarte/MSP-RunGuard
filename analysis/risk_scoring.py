@@ -21,6 +21,7 @@ def _collect_means(feature_rows: Iterable[Dict[str, Optional[float]]]) -> Dict[s
         "mean_left_knee_ankle_dev_norm": safe_mean(r.get("left_knee_ankle_dev_norm") for r in rows),
         "mean_right_knee_ankle_dev_norm": safe_mean(r.get("right_knee_ankle_dev_norm") for r in rows),
         "mean_keypoint_conf": safe_mean(r.get("mean_keypoint_conf") for r in rows),
+        "mean_human_time": safe_mean(r.get("human_time") for r in rows),
     }
 
 
@@ -45,7 +46,7 @@ def score_risk(feature_rows: Iterable[Dict[str, Optional[float]]], config: Dict[
     weights = config.get("weights", {})
     advice_map = config.get("advice", {})
     level_cfg = config.get("risk_level", {})
-
+    
     flags: List[str] = []
 
     trunk_thr = float(thresholds.get("forward_trunk_lean_deg", 22.0))
@@ -53,13 +54,16 @@ def score_risk(feature_rows: Iterable[Dict[str, Optional[float]]], config: Dict[
     left_dev_thr = float(thresholds.get("left_knee_ankle_dev_norm", 0.38))
     right_dev_thr = float(thresholds.get("right_knee_ankle_dev_norm", 0.38))
     min_conf = float(thresholds.get("min_mean_keypoint_conf", 0.2))
-
+    min_human_time = float(thresholds.get("min_mean_human_time", 0.5))
     trunk_triggered = means["mean_trunk_lean_deg"] is not None and means["mean_trunk_lean_deg"] > trunk_thr
     asym_triggered = means["mean_knee_angle_asym_deg"] is not None and means["mean_knee_angle_asym_deg"] > asym_thr
     left_triggered = means["mean_left_knee_ankle_dev_norm"] is not None and means["mean_left_knee_ankle_dev_norm"] > left_dev_thr
     right_triggered = means["mean_right_knee_ankle_dev_norm"] is not None and means["mean_right_knee_ankle_dev_norm"] > right_dev_thr
     conf_triggered = means["mean_keypoint_conf"] is not None and means["mean_keypoint_conf"] < min_conf
+    human_time_triggered = means["mean_human_time"] is not None and means["mean_human_time"] < min_human_time
 
+    if human_time_triggered:
+        flags.append("low_human_detection_time")
     if trunk_triggered:
         flags.append("forward_trunk_lean_risk")
     if asym_triggered:
@@ -70,7 +74,6 @@ def score_risk(feature_rows: Iterable[Dict[str, Optional[float]]], config: Dict[
         flags.append("right_knee_alignment_risk")
     if conf_triggered:
         flags.append("low_pose_confidence")
-
     score = 0.0
     contributions: List[Dict[str, object]] = []
     for f in flags:
@@ -135,6 +138,14 @@ def score_risk(feature_rows: Iterable[Dict[str, Optional[float]]], config: Dict[
             "relation": "<",
             "triggered": conf_triggered,
             "flag": "low_pose_confidence",
+        },
+        {
+            "metric": "mean_human_time",
+            "value": means["mean_human_time"],
+            "threshold": min_human_time,
+            "relation": "<",
+            "triggered": human_time_triggered,
+            "flag": "low_human_detection_time",
         },
     ]
 

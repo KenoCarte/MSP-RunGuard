@@ -213,6 +213,7 @@ def main() -> int:
         "knee_ankle_dev_asym",
         "frame_w",
         "frame_h",
+        "human_time",
     ]
 
     with torch.no_grad(), open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -263,19 +264,30 @@ def main() -> int:
                     if overlay_frame is None:
                         overlay_frame = draw_humans(frame, humans)
                     cv2.imshow("Temporal Analysis Live", overlay_frame)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        print("[INFO] live preview interrupted by user")
+                    keyval = cv2.waitKey(1)
+                    if keyval & 0xFF == ord('q'):
+                        print("[INFO] live interrupted by user")
                         break
+                    if keyval & 0xFF == ord('s'):
+                        cv2.imwrite(str(preview_image_path), overlay_frame)
+                        print(f"[INFO] preview image saved: {preview_image_path}")
+                    if keyval & 0xFF == ord(' '):
+                        capture_tmp = time.perf_counter()
+                        print(f"[INFO] live paused. Press space to resume.")
+                        cv2.waitKey(0)
+                        capture_t0= capture_t0 + (time.perf_counter() - capture_tmp)
 
                 if primary is not None:
                     t_feat0 = time.perf_counter()
                     parts = _extract_parts_px(primary, w, h)
                     feat = extract_frame_features(parts, w, h)
                     feature_time_total += time.perf_counter() - t_feat0
+                    feat["human_time"] = 1
                 else:
                     feat = {k: None for k in fieldnames if k not in ("frame_idx", "timestamp_sec")}
                     feat["frame_w"] = float(w)
                     feat["frame_h"] = float(h)
+                    feat["human_time"] = 0
             except Exception as exc:  # pylint: disable=broad-except
                 skipped_frames += 1
                 print(f"[WARN] frame_idx={frame_idx} skipped due to processing error: {exc}")
