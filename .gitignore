@@ -16,6 +16,8 @@ data/
 logs/
 network/
 scripts/
+1.py
+2.py
 
 .ipynb_checkpoints
 notebooks/*.pkl

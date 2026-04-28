@@ -946,6 +946,12 @@ CMakeFiles/PoseQtClient.dir/src/MainWindow.cpp.o
  /usr/include/x86_64-linux-gnu/qt6/QtCore/QTimer
  /usr/include/x86_64-linux-gnu/qt6/QtCore/qtimer.h
  /usr/include/x86_64-linux-gnu/qt6/QtCore/qbasictimer.h
+ /usr/include/x86_64-linux-gnu/qt6/QtNetwork/QUdpSocket
+ /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qudpsocket.h
+ /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qtnetworkglobal.h
+ /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qtnetwork-config.h
+ /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qabstractsocket.h
+ /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qhostaddress.h
 
 CMakeFiles/PoseQtClient.dir/src/main.cpp.o
  /home/carte/projects/pytorch_Realtime_Multi-Person_Pose_Estimation/qt_client/src/main.cpp

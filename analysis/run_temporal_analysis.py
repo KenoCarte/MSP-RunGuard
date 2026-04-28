@@ -160,13 +160,16 @@ def main() -> int:
             return 5
     else:
         source_type = "camera"
+        camera_idx = (args.camera_index if args.camera_index != 7 else "udp://localhost:5000")
         source_desc = f"camera:{args.camera_index}"
-        cap = cv2.VideoCapture(args.camera_index, cv2.CAP_V4L2)
+        print(f"[INFO] opening camera index {camera_idx} for capture...")
+        cap = cv2.VideoCapture(camera_idx, (cv2.CAP_V4L2 if camera_idx != "udp://localhost:5000" else 0))
         if not cap.isOpened():
             # Fallback probing in case selected index is metadata node.
             cap = None
-            for idx in [0, 2, 1, 3, 4, 5, 6, 7, 8]:
-                tmp = cv2.VideoCapture(idx, cv2.CAP_V4L2)
+            print(f"[WARN] failed to open camera index {camera_idx}. Attempting fallback probing of other indices...")
+            for idx in [0, 2, 1, 3, 4, 5, 6]:
+                tmp = cv2.VideoCapture(idx)
                 if not tmp.isOpened():
                     tmp.release()
                     continue

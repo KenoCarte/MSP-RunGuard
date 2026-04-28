@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
 add_executable(PoseQtClient
     src/main.cpp
@@ -15,4 +15,4 @@ add_executable(PoseQtClient
     src/MainWindow.cpp
 )
 
-target_link_libraries(PoseQtClient PRIVATE Qt6::Widgets)
+target_link_libraries(PoseQtClient PRIVATE Qt6::Widgets Qt6::Network)

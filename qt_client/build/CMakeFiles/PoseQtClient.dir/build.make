@@ -125,10 +125,11 @@ PoseQtClient: CMakeFiles/PoseQtClient.dir/src/main.cpp.o
 PoseQtClient: CMakeFiles/PoseQtClient.dir/src/MainWindow.cpp.o
 PoseQtClient: CMakeFiles/PoseQtClient.dir/build.make
 PoseQtClient: /usr/lib/x86_64-linux-gnu/libQt6Widgets.so.6.2.4
+PoseQtClient: /usr/lib/x86_64-linux-gnu/libQt6Network.so.6.2.4
 PoseQtClient: /usr/lib/x86_64-linux-gnu/libQt6Gui.so.6.2.4
-PoseQtClient: /usr/lib/x86_64-linux-gnu/libQt6Core.so.6.2.4
 PoseQtClient: /usr/lib/x86_64-linux-gnu/libGLX.so
 PoseQtClient: /usr/lib/x86_64-linux-gnu/libOpenGL.so
+PoseQtClient: /usr/lib/x86_64-linux-gnu/libQt6Core.so.6.2.4
 PoseQtClient: CMakeFiles/PoseQtClient.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/carte/projects/pytorch_Realtime_Multi-Person_Pose_Estimation/qt_client/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable PoseQtClient"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/PoseQtClient.dir/link.txt --verbose=$(VERBOSE)

@@ -943,7 +943,13 @@ CMakeFiles/PoseQtClient.dir/src/MainWindow.cpp.o: ../src/MainWindow.cpp \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qabstractitemmodel.h \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/QTimer \
   /usr/include/x86_64-linux-gnu/qt6/QtCore/qtimer.h \
-  /usr/include/x86_64-linux-gnu/qt6/QtCore/qbasictimer.h
+  /usr/include/x86_64-linux-gnu/qt6/QtCore/qbasictimer.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtNetwork/QUdpSocket \
+  /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qudpsocket.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qtnetworkglobal.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qtnetwork-config.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qabstractsocket.h \
+  /usr/include/x86_64-linux-gnu/qt6/QtNetwork/qhostaddress.h
 
 CMakeFiles/PoseQtClient.dir/src/main.cpp.o: ../src/main.cpp \
   /usr/include/stdc-predef.h \
@@ -1341,6 +1347,12 @@ CMakeFiles/PoseQtClient.dir/src/main.cpp.o: ../src/main.cpp \
 
 ../src/main.cpp:
 
+/usr/include/x86_64-linux-gnu/qt6/QtNetwork/qabstractsocket.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtNetwork/qtnetwork-config.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtNetwork/qtnetworkglobal.h:
+
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qbasictimer.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qtimer.h:
@@ -1488,6 +1500,8 @@ CMakeFiles/PoseQtClient.dir/src/main.cpp.o: ../src/main.cpp \
 /usr/include/x86_64-linux-gnu/qt6/QtCore/qstringmatcher.h:
 
 /usr/include/c++/11/bits/codecvt.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtNetwork/QUdpSocket:
 
 /usr/include/c++/11/bits/basic_ios.tcc:
 
@@ -2165,6 +2179,8 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 
 /usr/include/x86_64-linux-gnu/bits/local_lim.h:
 
+/usr/include/x86_64-linux-gnu/qt6/QtNetwork/qhostaddress.h:
+
 /usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtGui/qimage.h:
@@ -2376,6 +2392,8 @@ PoseQtClient_autogen/mocs_compilation.cpp:
 /usr/include/c++/11/ext/concurrence.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtGui/qvector2d.h:
+
+/usr/include/x86_64-linux-gnu/qt6/QtNetwork/qudpsocket.h:
 
 /usr/include/x86_64-linux-gnu/qt6/QtGui/qvectornd.h:
 

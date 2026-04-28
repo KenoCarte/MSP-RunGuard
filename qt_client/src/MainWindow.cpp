@@ -41,54 +41,55 @@
 #include <QColor>
 #include <QComboBox>
 #include <QTimer>
+#include <QUdpSocket>
 
 namespace {
-constexpr bool kCompactUi = true;
+    constexpr bool kCompactUi = true;
 
-// 日志高亮器：按关键字给日志行着色，便于快速定位错误/告警。
-class LogHighlighter : public QSyntaxHighlighter {
-public:
-    explicit LogHighlighter(QTextDocument* parent)
-        : QSyntaxHighlighter(parent) {
-        failFormat_.setForeground(QColor("#c62828"));
-        failFormat_.setFontWeight(QFont::Bold);
+    // 日志高亮器：按关键字给日志行着色，便于快速定位错误/告警。
+    class LogHighlighter : public QSyntaxHighlighter {
+    public:
+        explicit LogHighlighter(QTextDocument* parent)
+            : QSyntaxHighlighter(parent) {
+            failFormat_.setForeground(QColor("#c62828"));
+            failFormat_.setFontWeight(QFont::Bold);
 
-        warnFormat_.setForeground(QColor("#ef6c00"));
-        warnFormat_.setFontWeight(QFont::DemiBold);
+            warnFormat_.setForeground(QColor("#ef6c00"));
+            warnFormat_.setFontWeight(QFont::DemiBold);
 
-        okFormat_.setForeground(QColor("#2e7d32"));
-        okFormat_.setFontWeight(QFont::DemiBold);
+            okFormat_.setForeground(QColor("#2e7d32"));
+            okFormat_.setFontWeight(QFont::DemiBold);
 
-        infoFormat_.setForeground(QColor("#1565c0"));
-    }
-
-protected:
-    void highlightBlock(const QString& text) override {
-        const QString upper = text.toUpper();
-        if (upper.contains("[FAIL]") || upper.contains("[STDERR]") || upper.contains("ERROR")) {
-            setFormat(0, text.length(), failFormat_);
-            return;
+            infoFormat_.setForeground(QColor("#1565c0"));
         }
-        if (upper.contains("[WARN]") || upper.contains("WARNING")) {
-            setFormat(0, text.length(), warnFormat_);
-            return;
-        }
-        if (upper.contains("[OK]") || upper.contains("DONE") || upper.contains("SUCCESS")) {
-            setFormat(0, text.length(), okFormat_);
-            return;
-        }
-        if (upper.contains("[INFO]") || upper.contains("[STDOUT]") || upper.contains("[VIDEO]")) {
-            setFormat(0, text.length(), infoFormat_);
-            return;
-        }
-    }
 
-private:
-    QTextCharFormat failFormat_;
-    QTextCharFormat warnFormat_;
-    QTextCharFormat okFormat_;
-    QTextCharFormat infoFormat_;
-};
+    protected:
+        void highlightBlock(const QString& text) override {
+            const QString upper = text.toUpper();
+            if (upper.contains("[FAIL]") || upper.contains("[STDERR]") || upper.contains("ERROR")) {
+                setFormat(0, text.length(), failFormat_);
+                return;
+            }
+            if (upper.contains("[WARN]") || upper.contains("WARNING")) {
+                setFormat(0, text.length(), warnFormat_);
+                return;
+            }
+            if (upper.contains("[OK]") || upper.contains("DONE") || upper.contains("SUCCESS")) {
+                setFormat(0, text.length(), okFormat_);
+                return;
+            }
+            if (upper.contains("[INFO]") || upper.contains("[STDOUT]") || upper.contains("[VIDEO]")) {
+                setFormat(0, text.length(), infoFormat_);
+                return;
+            }
+        }
+
+    private:
+        QTextCharFormat failFormat_;
+        QTextCharFormat warnFormat_;
+        QTextCharFormat okFormat_;
+        QTextCharFormat infoFormat_;
+    };
 }
 
 MainWindow::MainWindow(QWidget* parent)
@@ -202,7 +203,7 @@ void MainWindow::buildUi() {
         rowLayout->addWidget(edit, 1);
         rowLayout->addWidget(btn);
         return rowWidget;
-    };
+        };
 
     basicLayout->addRow(QStringLiteral("Python"), buildPathRow(pythonEdit_, "python3", this, SLOT(browsePythonPath())));
     basicLayout->addRow(QStringLiteral("Script"), buildPathRow(scriptEdit_, "", this, SLOT(browseScriptPath())));
@@ -230,11 +231,12 @@ void MainWindow::buildUi() {
     sourceModeCombo_->setMinimumHeight(30);
     sourceModeCombo_->addItem(QStringLiteral("Video File"), QStringLiteral("video"));
     sourceModeCombo_->addItem(QStringLiteral("Camera"), QStringLiteral("camera"));
+    sourceModeCombo_->addItem(QStringLiteral("Phone"), QStringLiteral("phone"));
     connect(sourceModeCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::onSourceModeChanged);
     auto* cameraLabel = new QLabel(QStringLiteral("Camera Index"), this);
     cameraIndexSpin_ = new QSpinBox(this);
     cameraIndexSpin_->setMinimumHeight(30);
-    cameraIndexSpin_->setRange(0, 8);
+    cameraIndexSpin_->setRange(0, 6);
     cameraIndexSpin_->setValue(0);
     auto* maxSecondsLabel = new QLabel(QStringLiteral("Max Seconds"), this);
     maxSecondsSpin_ = new QSpinBox(this);
@@ -588,7 +590,8 @@ void MainWindow::setUiRunning(bool running) {
     if (batchButton_) batchButton_->setEnabled(!running && !batchCancelRequested_);
     if (running) {
         setOperationHint(QStringLiteral("Status: Running analysis. Please wait for summary output."));
-    } else {
+    }
+    else {
         setOperationHint(QStringLiteral("Status: Idle. You can update settings and run again."));
     }
 }
@@ -600,7 +603,8 @@ void MainWindow::setOperationHint(const QString& hint, bool isError) {
     operationHintLabel_->setText(hint);
     if (isError) {
         operationHintLabel_->setStyleSheet("color:#991b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; padding:4px 8px;");
-    } else {
+    }
+    else {
         operationHintLabel_->setStyleSheet("color:#334155; background:#eef5ff; border:1px solid #c7dbff; border-radius:6px; padding:4px 8px;");
     }
 }
@@ -646,11 +650,11 @@ bool MainWindow::validatePaths(QString* errorMessage) const {
 QStringList MainWindow::buildInferenceArgs(const QString& inputPath, const QString& outputPath) const {
     QStringList args;
     args << scriptEdit_->text().trimmed()
-         << "--cfg" << cfgEdit_->text().trimmed()
-         << "--weight" << weightEdit_->text().trimmed()
-         << "--input" << inputPath
-         << "--output" << outputPath
-         << "--device" << "auto";
+        << "--cfg" << cfgEdit_->text().trimmed()
+        << "--weight" << weightEdit_->text().trimmed()
+        << "--input" << inputPath
+        << "--output" << outputPath
+        << "--device" << "auto";
     return args;
 }
 
@@ -667,10 +671,10 @@ void MainWindow::setRiskPanelDefaults() {
     if (riskAdviceView_) {
         riskAdviceView_->setPlainText(
             QStringLiteral("No risk summary loaded.\n"
-                           "Run video analysis first, then the panel will show\n"
-                           "1) risk overview\n"
-                           "2) key movement issues\n"
-                           "3) actionable training advice."));
+                "Run video analysis first, then the panel will show\n"
+                "1) risk overview\n"
+                "2) key movement issues\n"
+                "3) actionable training advice."));
     }
 }
 
@@ -921,15 +925,42 @@ void MainWindow::runVideoAnalysis() {
                 this,
                 QStringLiteral("Camera unavailable"),
                 QStringLiteral("Camera device %1 not found.\n\n"
-                               "If you are in WSL, webcam may not be passed through by default.\n"
-                               "Try one of these:\n"
-                               "1) Use Video File mode; or\n"
-                               "2) Enable WSL camera/device passthrough and ensure /dev/video* exists.")
-                    .arg(devPath));
+                    "If you are in WSL, webcam may not be passed through by default.\n"
+                    "Try one of these:\n"
+                    "1) Use Video File mode; or\n"
+                    "2) Enable WSL camera/device passthrough and ensure /dev/video* exists.")
+                .arg(devPath));
             appendLog(QStringLiteral("[VIDEO][WARN] camera device missing: %1").arg(devPath));
             setOperationHint(QStringLiteral("Status: Camera device is unavailable in current environment."), true);
             return;
         }
+    }
+    if (sourceMode == QStringLiteral("phone")) {
+        // UDP 检测 5000 端口是否有推流数据
+        QUdpSocket udp;
+        if (!udp.bind(QHostAddress::AnyIPv4, 5000, QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint)) {
+            QMessageBox::warning(this, QStringLiteral("Phone unavailable"), QStringLiteral("Iriun Webcam service not detected. Please ensure that 127.0.0.1:5000 is running!"));
+            setOperationHint(QStringLiteral("Status: Cannot bind UDP port 5000."), true);
+            return;
+        }
+        bool gotData = false;
+        QElapsedTimer timer;
+        timer.start();
+        while (timer.elapsed() < 1200) {
+            if (udp.hasPendingDatagrams()) {
+                gotData = true;
+                break;
+            }
+            udp.waitForReadyRead(200);
+        }
+        udp.close();
+        if (!gotData) {
+            QMessageBox::warning(this, QStringLiteral("Phone unavailable"), QStringLiteral("Iriun Webcam service not detected. Please ensure that 127.0.0.1:5000 is running!"));
+            setOperationHint(QStringLiteral("Status: No UDP stream detected on port 5000."), true);
+            return;
+        }
+        QMessageBox::information(NULL, "INFO", "If the process is running normally, please be patient and ignore the video error.",
+            QMessageBox::Yes);
     }
     if (!riskConfigPath.isEmpty() && !QFileInfo::exists(riskConfigPath)) {
         setOperationHint(QStringLiteral("Status: risk config path invalid."), true);
@@ -960,16 +991,22 @@ void MainWindow::runVideoAnalysis() {
 
     QStringList args;
     args << analysisScript
-         << "--cfg" << cfgPath
-         << "--weight" << weightPath
-         << "--out-dir" << outDir
-         << "--device" << "auto"
-         << "--frame-stride" << QString::number(frameStrideSpin_ ? frameStrideSpin_->value() : 1);
+        << "--cfg" << cfgPath
+        << "--weight" << weightPath
+        << "--out-dir" << outDir
+        << "--device" << "auto"
+        << "--frame-stride" << QString::number(frameStrideSpin_ ? frameStrideSpin_->value() : 1);
     if (sourceMode == QStringLiteral("video")) {
         args << "--video" << videoPath;
-    } else {
+    }
+    else if (sourceMode == QStringLiteral("camera")) {
         args << "--camera-index" << QString::number(cameraIndex)
-             << "--max-seconds" << QString::number(maxSeconds);
+            << "--max-seconds" << QString::number(maxSeconds);
+    }
+    else if (sourceMode == QStringLiteral("phone")) {
+        // phone模式实际走camera index=7
+        args << "--camera-index" << "7"
+            << "--max-seconds" << QString::number(maxSeconds);
     }
     if (!riskConfigPath.isEmpty()) {
         args << "--risk-config" << riskConfigPath;
@@ -977,11 +1014,11 @@ void MainWindow::runVideoAnalysis() {
     if (saveOverlayCheck_ && saveOverlayCheck_->isChecked()) {
         args << "--save-overlay-video";
     }
-    if (showLiveCheck_ && showLiveCheck_->isChecked() && sourceMode == QStringLiteral("camera")) {
+    if (showLiveCheck_ && showLiveCheck_->isChecked() && sourceMode != QStringLiteral("video")) {
         args << "--show-live";
     }
     args << "--preview-image" << livePreviewPath_
-         << "--preview-interval" << "3";
+        << "--preview-interval" << "3";
 
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert("PYTHONUNBUFFERED", "1");
@@ -1010,14 +1047,14 @@ void MainWindow::runVideoAnalysis() {
     }
     saveUiSettings();
     appendLog(QStringLiteral("[VIDEO][RUN] source=%1 input=%2 out_dir=%3 stride=%4 max_seconds=%5")
-                  .arg(sourceMode)
-                  .arg(sourceMode == QStringLiteral("video") ? videoPath : QStringLiteral("camera:%1").arg(cameraIndex))
-                  .arg(outDir)
-                  .arg(frameStrideSpin_ ? frameStrideSpin_->value() : 1)
-                  .arg(maxSeconds));
+        .arg(sourceMode)
+        .arg(sourceMode == QStringLiteral("video") ? videoPath : QStringLiteral("camera:%1").arg(cameraIndex))
+        .arg(outDir)
+        .arg(frameStrideSpin_ ? frameStrideSpin_->value() : 1)
+        .arg(maxSeconds));
     setOperationHint(QStringLiteral("Status: Video analysis started. Waiting for live preview and summary..."));
-    if (showLiveCheck_ && showLiveCheck_->isChecked() && sourceMode == QStringLiteral("camera")) {
-        appendLog(QStringLiteral("[VIDEO] live preview enabled (press q in preview window to stop early)."));
+    if (showLiveCheck_ && showLiveCheck_->isChecked() && sourceMode != QStringLiteral("video")) {
+        appendLog(QStringLiteral("[VIDEO] live preview enabled (press q in preview window to stop early or press ' ' to stop temporarily)."));
     }
     statusBar()->showMessage(QStringLiteral("Running video temporal analysis..."));
 
@@ -1026,14 +1063,15 @@ void MainWindow::runVideoAnalysis() {
 
 void MainWindow::onSourceModeChanged(int) {
     const QString sourceMode = sourceModeCombo_ ? sourceModeCombo_->currentData().toString() : QStringLiteral("video");
-    const bool isCamera = (sourceMode == QStringLiteral("camera"));
+    const bool notVideo = (sourceMode != QStringLiteral("video"));
 
     if (showLiveCheck_) {
-        showLiveCheck_->setEnabled(isCamera);
-        if (!isCamera) {
+        showLiveCheck_->setEnabled(notVideo);
+        if (!notVideo) {
             showLiveCheck_->setChecked(false);
             showLiveCheck_->setToolTip(QStringLiteral("Live preview is available only in Camera mode."));
-        } else {
+        }
+        else {
             showLiveCheck_->setToolTip(QStringLiteral("Show realtime overlay window during camera analysis."));
         }
     }
@@ -1050,8 +1088,8 @@ void MainWindow::detectCameraIndex() {
     // 通过 open+read 双判定过滤 metadata 节点，减少“能打开但无图像帧”的误判。
     probeCode += "import cv2\n";
     probeCode += "ok=[]\n";
-    probeCode += "for i in range(9):\n";
-    probeCode += "    c=cv2.VideoCapture(i, cv2.CAP_V4L2)\n";
+    probeCode += "for i in range(7):\n";
+    probeCode += "    c=cv2.VideoCapture(i,cv2.CAP_V4L2)\n";
     probeCode += "    o=c.isOpened()\n";
     probeCode += "    r=False\n";
     probeCode += "    w=0\n";
@@ -1152,7 +1190,8 @@ void MainWindow::onProcessStdoutReady() {
                 }
                 statusBar()->showMessage(QStringLiteral("Video running: processed_frames=%1").arg(frames));
             }
-        } else {
+        }
+        else {
             appendLog(QStringLiteral("[STDOUT] %1").arg(line));
         }
     }
@@ -1181,7 +1220,8 @@ void MainWindow::onProcessStderrReady() {
         if (line.isEmpty()) continue;
         if (taskMode_ == TaskMode::VideoAnalysis) {
             appendLog(QStringLiteral("[VIDEO][STDERR] %1").arg(line));
-        } else {
+        }
+        else {
             appendLog(QStringLiteral("[STDERR] %1").arg(line));
         }
     }
@@ -1209,7 +1249,7 @@ void MainWindow::saveLogToFile() {
     }
 
     const QString suggested = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
-                                  .filePath(QStringLiteral("pose_qt_log.txt"));
+        .filePath(QStringLiteral("pose_qt_log.txt"));
     const QString path = QFileDialog::getSaveFileName(
         this,
         QStringLiteral("Save run log"),
@@ -1348,7 +1388,8 @@ void MainWindow::runBatchInference() {
             ++success;
             appendLog(QStringLiteral("[BATCH][OK][%1/%2] %3 => %4").arg(i + 1).arg(files.size()).arg(inputPath, outputPath));
             if (!out.isEmpty()) appendLog(QStringLiteral("  stdout: %1").arg(out));
-        } else {
+        }
+        else {
             ++failed;
             appendLog(QStringLiteral("[BATCH][FAIL][%1/%2] %3").arg(i + 1).arg(files.size()).arg(inputPath));
             if (!out.isEmpty()) appendLog(QStringLiteral("  stdout: %1").arg(out));
@@ -1364,9 +1405,9 @@ void MainWindow::runBatchInference() {
         if (batchStatusLabel_) {
             batchStatusLabel_->setText(
                 QStringLiteral("Batch running: %1/%2, ETA %3")
-                    .arg(processed)
-                    .arg(files.size())
-                    .arg(formatEtaSeconds(etaSec)));
+                .arg(processed)
+                .arg(files.size())
+                .arg(formatEtaSeconds(etaSec)));
         }
 
         QCoreApplication::processEvents();
@@ -1395,7 +1436,8 @@ void MainWindow::runBatchInference() {
 
     if (success > 0) {
         QMessageBox::information(this, QStringLiteral("Batch completed"), QStringLiteral("success=%1, failed=%2").arg(success).arg(failed));
-    } else {
+    }
+    else {
         QMessageBox::warning(this, QStringLiteral("Batch completed"), QStringLiteral("All batch jobs failed."));
     }
     batchCancelRequested_ = false;
@@ -1524,13 +1566,17 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
         for (const QString& f : flags) {
             if (f == QStringLiteral("forward_trunk_lean_risk")) {
                 fallback << QStringLiteral("Excessive forward trunk lean. Reduce pace and strengthen core stability.");
-            } else if (f == QStringLiteral("left_right_knee_asymmetry_risk")) {
+            }
+            else if (f == QStringLiteral("left_right_knee_asymmetry_risk")) {
                 fallback << QStringLiteral("Left-right knee motion asymmetry detected. Add unilateral stability and strength training.");
-            } else if (f == QStringLiteral("left_knee_alignment_risk")) {
+            }
+            else if (f == QStringLiteral("left_knee_alignment_risk")) {
                 fallback << QStringLiteral("Left knee-ankle alignment risk is elevated. Monitor landing knee path and adjust cadence.");
-            } else if (f == QStringLiteral("right_knee_alignment_risk")) {
+            }
+            else if (f == QStringLiteral("right_knee_alignment_risk")) {
                 fallback << QStringLiteral("Right knee-ankle alignment risk is elevated. Monitor landing knee path and adjust cadence.");
-            } else if (f == QStringLiteral("low_pose_confidence")) {
+            }
+            else if (f == QStringLiteral("low_pose_confidence")) {
                 fallback << QStringLiteral("Pose confidence is low. Improve camera angle, lighting, and resolution.");
             }
         }
@@ -1544,11 +1590,14 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
     riskLevelValueLabel_->setText(level);
     if (level == QStringLiteral("high")) {
         riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; color:#b91c1c; font-weight:700; background:#fee2e2; border:1px solid #fecaca; border-radius:6px; padding:2px 6px;"));
-    } else if (level == QStringLiteral("medium")) {
+    }
+    else if (level == QStringLiteral("medium")) {
         riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; color:#b45309; font-weight:700; background:#ffedd5; border:1px solid #fed7aa; border-radius:6px; padding:2px 6px;"));
-    } else if (level == QStringLiteral("low")) {
+    }
+    else if (level == QStringLiteral("low")) {
         riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; color:#166534; font-weight:700; background:#dcfce7; border:1px solid #bbf7d0; border-radius:6px; padding:2px 6px;"));
-    } else {
+    }
+    else {
         riskLevelValueLabel_->setStyleSheet(QStringLiteral("font-size:12px; font-weight:700; background:#f3f6fb; border:1px solid #e2e8f0; border-radius:6px; padding:2px 6px;"));
     }
 
@@ -1556,11 +1605,14 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
     QString levelDesc;
     if (levelLower == QStringLiteral("high")) {
         levelDesc = QStringLiteral("High - urgent correction needed");
-    } else if (levelLower == QStringLiteral("medium")) {
+    }
+    else if (levelLower == QStringLiteral("medium")) {
         levelDesc = QStringLiteral("Medium - monitor and improve this week");
-    } else if (levelLower == QStringLiteral("low")) {
+    }
+    else if (levelLower == QStringLiteral("low")) {
         levelDesc = QStringLiteral("Low - maintain good movement quality");
-    } else {
+    }
+    else {
         levelDesc = QStringLiteral("Unknown");
     }
 
@@ -1581,10 +1633,11 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
             for (const QJsonValue& item : contributions) {
                 const QJsonObject obj = item.toObject();
                 detailedAdvice << QStringLiteral("  * %1: +%2")
-                                    .arg(obj.value(QStringLiteral("flag")).toString())
-                                    .arg(QString::number(obj.value(QStringLiteral("weight")).toDouble(), 'f', 3));
+                    .arg(obj.value(QStringLiteral("flag")).toString())
+                    .arg(QString::number(obj.value(QStringLiteral("weight")).toDouble(), 'f', 3));
             }
-        } else {
+        }
+        else {
             detailedAdvice << QStringLiteral("- No rule was triggered, score remains baseline (0.000).");
         }
 
@@ -1597,11 +1650,11 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
                 const QString relation = obj.value(QStringLiteral("relation")).toString();
                 const QString trig = obj.value(QStringLiteral("triggered")).toBool() ? QStringLiteral("TRIGGERED") : QStringLiteral("ok");
                 detailedAdvice << QStringLiteral("  * %1 = %2 (%3 %4) -> %5")
-                                    .arg(obj.value(QStringLiteral("metric")).toString())
-                                    .arg(valueText)
-                                    .arg(relation)
-                                    .arg(QString::number(obj.value(QStringLiteral("threshold")).toDouble(), 'f', 3))
-                                    .arg(trig);
+                    .arg(obj.value(QStringLiteral("metric")).toString())
+                    .arg(valueText)
+                    .arg(relation)
+                    .arg(QString::number(obj.value(QStringLiteral("threshold")).toDouble(), 'f', 3))
+                    .arg(trig);
             }
         }
     }
@@ -1616,32 +1669,38 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
                 detailedAdvice << QStringLiteral("   - Signal: Forward lean is excessive during support phase.");
                 detailedAdvice << QStringLiteral("   - Action: Lower speed 10-15%, keep chest lifted, tighten core before foot strike.");
                 detailedAdvice << QStringLiteral("   - Drill: 3 sets of 30s wall-lean posture hold + 2 sets of slow high-knee runs.");
-            } else if (f == QStringLiteral("left_right_knee_asymmetry_risk")) {
+            }
+            else if (f == QStringLiteral("left_right_knee_asymmetry_risk")) {
                 detailedAdvice << QStringLiteral("%1. Left-Right Symmetry").arg(idx++);
                 detailedAdvice << QStringLiteral("   - Signal: Knee movement differs between sides.");
                 detailedAdvice << QStringLiteral("   - Action: Add unilateral strength training and reduce fatigue load on weak side.");
                 detailedAdvice << QStringLiteral("   - Drill: Split squat 3x8 each side, single-leg bridge 3x10 each side.");
-            } else if (f == QStringLiteral("left_knee_alignment_risk")) {
+            }
+            else if (f == QStringLiteral("left_knee_alignment_risk")) {
                 detailedAdvice << QStringLiteral("%1. Left Knee Alignment").arg(idx++);
                 detailedAdvice << QStringLiteral("   - Signal: Left knee path may collapse inward/outward.");
                 detailedAdvice << QStringLiteral("   - Action: Focus on knee-over-toe alignment at landing and push-off.");
                 detailedAdvice << QStringLiteral("   - Drill: Lateral band walk 3x12 + single-leg squat to box 3x6.");
-            } else if (f == QStringLiteral("right_knee_alignment_risk")) {
+            }
+            else if (f == QStringLiteral("right_knee_alignment_risk")) {
                 detailedAdvice << QStringLiteral("%1. Right Knee Alignment").arg(idx++);
                 detailedAdvice << QStringLiteral("   - Signal: Right knee tracking is unstable under load.");
                 detailedAdvice << QStringLiteral("   - Action: Improve hip-knee-ankle alignment and shorten stride temporarily.");
                 detailedAdvice << QStringLiteral("   - Drill: Step-down control 3x8 + resisted terminal knee extension 3x12.");
-            } else if (f == QStringLiteral("low_pose_confidence")) {
+            }
+            else if (f == QStringLiteral("low_pose_confidence")) {
                 detailedAdvice << QStringLiteral("%1. Capture Quality").arg(idx++);
                 detailedAdvice << QStringLiteral("   - Signal: Pose confidence is low, result reliability is reduced.");
                 detailedAdvice << QStringLiteral("   - Action: Increase lighting, keep full body in frame, avoid motion blur.");
                 detailedAdvice << QStringLiteral("   - Drill: Re-record with fixed camera height at hip level and side/front view.");
-            } else {
+            }
+            else {
                 detailedAdvice << QStringLiteral("%1. %2").arg(idx++).arg(f);
                 detailedAdvice << QStringLiteral("   - Action: Check this metric trend in the next 3 sessions and adjust training load.");
             }
         }
-    } else {
+    }
+    else {
         detailedAdvice << QString();
         detailedAdvice << QStringLiteral("Targeted Corrections");
         detailedAdvice << QStringLiteral("- No obvious high-risk flag was detected in this sample.");
@@ -1654,11 +1713,13 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
         detailedAdvice << QStringLiteral("- Day 1-2: Reduce high-impact training volume by 30-40%.");
         detailedAdvice << QStringLiteral("- Day 3-5: Add technique drills first, then low-intensity running.");
         detailedAdvice << QStringLiteral("- Day 6-7: Re-test with camera and compare key flags.");
-    } else if (levelLower == QStringLiteral("medium")) {
+    }
+    else if (levelLower == QStringLiteral("medium")) {
         detailedAdvice << QStringLiteral("- Keep normal volume but reduce pace peaks and fatigue accumulation.");
         detailedAdvice << QStringLiteral("- Insert 10-15 minutes corrective drills before each session.");
         detailedAdvice << QStringLiteral("- Re-check movement quality within one week.");
-    } else {
+    }
+    else {
         detailedAdvice << QStringLiteral("- Maintain current plan and add light stability work 2-3 times/week.");
         detailedAdvice << QStringLiteral("- Keep collecting clips under consistent camera setup for trend tracking.");
     }
@@ -1679,10 +1740,10 @@ bool MainWindow::loadRiskSummaryFromPath(const QString& summaryPath, bool intera
     const QJsonObject perfObj = root.value(QStringLiteral("performance")).toObject();
     if (!perfObj.isEmpty()) {
         appendLog(QStringLiteral("[PERF] infer_ms=%1 pose_ms=%2 feature_ms=%3 fps=%4")
-                      .arg(perfObj.value(QStringLiteral("avg_infer_ms")).toDouble())
-                      .arg(perfObj.value(QStringLiteral("avg_pose_decode_ms")).toDouble())
-                      .arg(perfObj.value(QStringLiteral("avg_feature_ms")).toDouble())
-                      .arg(perfObj.value(QStringLiteral("throughput_fps")).toDouble()));
+            .arg(perfObj.value(QStringLiteral("avg_infer_ms")).toDouble())
+            .arg(perfObj.value(QStringLiteral("avg_pose_decode_ms")).toDouble())
+            .arg(perfObj.value(QStringLiteral("avg_feature_ms")).toDouble())
+            .arg(perfObj.value(QStringLiteral("throughput_fps")).toDouble()));
     }
     statusBar()->showMessage(interactive ? QStringLiteral("Risk summary loaded.") : QStringLiteral("Risk summary auto-updated."), 5000);
     setOperationHint(QStringLiteral("Status: Summary loaded successfully. Review Advice and diagnostics."));
@@ -1715,14 +1776,16 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
     if (!processStdoutBuffer_.trimmed().isEmpty()) {
         if (taskMode_ == TaskMode::VideoAnalysis) {
             appendLog(QStringLiteral("[VIDEO][STDOUT] %1").arg(processStdoutBuffer_.trimmed()));
-        } else {
+        }
+        else {
             appendLog(QStringLiteral("[STDOUT] %1").arg(processStdoutBuffer_.trimmed()));
         }
     }
     if (!processStderrBuffer_.trimmed().isEmpty()) {
         if (taskMode_ == TaskMode::VideoAnalysis) {
             appendLog(QStringLiteral("[VIDEO][STDERR] %1").arg(processStderrBuffer_.trimmed()));
-        } else {
+        }
+        else {
             appendLog(QStringLiteral("[STDERR] %1").arg(processStderrBuffer_.trimmed()));
         }
     }
@@ -1744,7 +1807,8 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
                 summaryEdit_->setText(summaryPath);
                 refreshSummaryWatcher();
                 loadRiskSummaryFromPath(summaryPath, false);
-            } else {
+            }
+            else {
                 appendLog(QStringLiteral("[VIDEO][WARN] summary missing: %1").arg(summaryPath));
             }
             if (QFileInfo::exists(overlayPath)) {
@@ -1761,13 +1825,15 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
                 QRegularExpressionMatch m = rxProcessed.match(stdOut);
                 if (m.hasMatch()) {
                     batchStatusLabel_->setText(QStringLiteral("Video done: processed_frames=%1").arg(m.captured(1)));
-                } else {
+                }
+                else {
                     batchStatusLabel_->setText(QStringLiteral("Video analysis done"));
                 }
             }
             if (elapsedMs >= 0) {
                 statusBar()->showMessage(QStringLiteral("Video analysis done. e2e_ms=%1").arg(elapsedMs), 8000);
-            } else {
+            }
+            else {
                 statusBar()->showMessage(QStringLiteral("Video analysis done."), 8000);
             }
             setOperationHint(QStringLiteral("Status: Video analysis completed successfully."));
@@ -1786,11 +1852,13 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
         }
         if (!modelCost.isEmpty() && elapsedMs >= 0) {
             statusBar()->showMessage(QStringLiteral("Done. model_cost_ms=%1, e2e_ms=%2")
-                                         .arg(modelCost)
-                                         .arg(elapsedMs));
-        } else if (elapsedMs >= 0) {
+                .arg(modelCost)
+                .arg(elapsedMs));
+        }
+        else if (elapsedMs >= 0) {
             statusBar()->showMessage(QStringLiteral("Done. e2e_ms=%1").arg(elapsedMs));
-        } else {
+        }
+        else {
             statusBar()->showMessage(QStringLiteral("Done."));
         }
         if (!stdOut.trimmed().isEmpty()) appendLog(QStringLiteral("[OK] %1").arg(stdOut.trimmed()));
@@ -1815,9 +1883,9 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
             this,
             QStringLiteral("Video analysis failed"),
             QStringLiteral("exitCode=%1\nstdout:\n%2\nstderr:\n%3")
-                .arg(exitCode)
-                .arg(stdOut)
-                .arg(stdErr));
+            .arg(exitCode)
+            .arg(stdOut)
+            .arg(stdErr));
         taskMode_ = TaskMode::None;
         return;
     }
@@ -1830,9 +1898,9 @@ void MainWindow::onInferenceFinished(int exitCode, QProcess::ExitStatus exitStat
         this,
         QStringLiteral("Inference failed"),
         QStringLiteral("exitCode=%1\nstdout:\n%2\nstderr:\n%3")
-            .arg(exitCode)
-            .arg(stdOut)
-            .arg(stdErr));
+        .arg(exitCode)
+        .arg(stdOut)
+        .arg(stdErr));
     taskMode_ = TaskMode::None;
 }
 
